@@ -31,10 +31,21 @@ The loop for this project is:
 
 Course completion is useful, but it is not the finish line. Projects and the ability to explain/debug my own work matter more.
 
+## Core knowledge notes
+
+When a subject becomes foundational enough that I will need it again later, it gets its own detailed reference under `knowledge/`. These are not copied course notes. They are written around the explanations, mistakes, questions, and mental models that actually helped the subject click for me.
+
+They should work both as a deeper refresher when I cannot watch a lecture and as a quick reference months later.
+
+- [Gradient Descent](knowledge/GRADIENT_DESCENT.md) — cost, derivatives/gradients, learning rate, parameter updates, convergence, scientific notation, and the connection to later deep learning.
+
+This section should grow selectively. Not every lesson deserves a document; core concepts that later knowledge depends on do.
+
 ## Repository map
 
 - [ROADMAP.md](ROADMAP.md) — the evolving long-term plan and current phase.
 - [LEARNING_LOG.md](LEARNING_LOG.md) — milestones, concepts I struggled with, useful explanations, and subjects worth revisiting.
+- [knowledge/](knowledge/) — detailed human-readable reference notes for core concepts I will repeatedly need.
 - [PROJECTS.md](PROJECTS.md) — training projects and portfolio ideas.
 - [CERTIFICATIONS.md](CERTIFICATIONS.md) — certification candidates and, importantly, when I should actually attempt them.
 
