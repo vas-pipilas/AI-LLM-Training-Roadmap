@@ -14,6 +14,26 @@ Decision after completion: **no second generic Python course**. Continue develop
 
 Next major learning step: **Andrew Ng / DeepLearning.AI Machine Learning Specialization**.
 
+### September 2026 — Local ML / Jupyter environment ready
+
+Set up the local workstation for the Machine Learning phase instead of using the global Python installation.
+
+Current setup:
+
+- Windows + Visual Studio Code
+- Miniconda / Conda environment: `ml-foundations`
+- Python 3.12
+- Jupyter + ipykernel
+- NumPy, pandas, Matplotlib and scikit-learn
+- VS Code workspace bound to the `ml-foundations` interpreter
+- Jupyter kernel registered as **Python (ML Foundations)**
+
+The sanity-check notebook confirmed that Jupyter is executing the Python interpreter inside `miniconda3/envs/ml-foundations`, not the global Python installation.
+
+The repository also now contains a conservative ML/AI `.gitignore` so local environments, secrets, large datasets, model weights, checkpoints and caches do not accidentally end up in GitHub.
+
+Useful lesson from the setup: the Python interpreter selected by VS Code, the Conda environment active in a terminal, and the Jupyter kernel are related but separate things. The reliable check is always the interpreter that actually executes the code.
+
 ## Concepts to revisit
 
 Add entries here as they appear during training. A useful entry answers three questions:
