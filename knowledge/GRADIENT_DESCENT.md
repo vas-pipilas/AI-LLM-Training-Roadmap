@@ -493,6 +493,116 @@ Later terms such as **backpropagation**, **autograd**, **optimizer**, **learning
 
 That is why gradient descent is core knowledge rather than something to memorize for one quiz.
 
+
+---
+
+## 15. Feature scaling / Z-score normalization
+
+When different features live on wildly different numerical scales, gradient descent can become awkward and slow.
+
+For example, one house may look like:
+
+```text
+size       = 2000
+bedrooms   = 3
+floors     = 1
+age        = 40
+```
+
+Z-score normalization transforms each feature separately:
+
+```text
+x_norm = (x - mu) / sigma
+```
+
+where:
+
+- `mu` is the mean of that feature in the training set.
+- `sigma` is the standard deviation of that feature in the training set.
+
+The useful intuition is that the normalized number tells me roughly **how far above or below the training-set average this value is, measured in standard deviations**.
+
+Example:
+
+```text
+mean house size = 1500 sqft
+standard deviation = 500 sqft
+
+2000 sqft → (2000 - 1500) / 500 = +1
+1500 sqft → (1500 - 1500) / 500 =  0
+1000 sqft → (1000 - 1500) / 500 = -1
+```
+
+So `-1` does not mean a negative house size. It means one standard deviation below the training-set mean.
+
+After normalization, features that originally looked like:
+
+```text
+[2000, 3, 1, 40]
+```
+
+may instead look roughly like:
+
+```text
+[1.2, 0.4, -0.7, 0.1]
+```
+
+Their scales are now much more comparable, which generally lets gradient descent make more balanced progress across the parameters.
+
+### The golden rule for prediction
+
+> **A model trained on normalized features must receive new inputs normalized with the SAME mean and standard deviation that were learned from the TRAINING data.**
+
+This is not optional preprocessing decoration. Those saved values are part of the transformation the trained model expects.
+
+Training:
+
+```text
+X_train
+   ↓
+calculate training mu and sigma
+   ↓
+X_train_norm = (X_train - mu) / sigma
+   ↓
+train model
+   ↓
+learn w,b
+```
+
+Later, for a real new example:
+
+```text
+real new X
+   ↓
+use the SAME saved training mu and sigma
+   ↓
+X_new_norm = (X_new - training_mu) / training_sigma
+   ↓
+trained model
+   ↓
+prediction
+```
+
+Do **not** calculate a new mean and standard deviation from the new example. That would put the new input on a different numerical reference system from the one the model learned.
+
+A useful way to think about it:
+
+> **The saved training mu and sigma let me speak the same numerical language to the model at prediction time that I used when training it.**
+
+If only the input features `X` were normalized and the target `y` was left in its original units, the model's prediction is already in the target's original units. There is no need to "denormalize the prediction."
+
+If I ever need to convert a normalized feature back to its original value, the inverse is:
+
+```text
+x = x_norm * sigma + mu
+```
+
+So the quick pipeline is:
+
+```text
+real X → normalize with TRAINING mu/sigma → model → real y prediction
+```
+
 ---
 
 # Quick refresh — 60 seconds
