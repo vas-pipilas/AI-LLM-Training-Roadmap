@@ -38,6 +38,7 @@ When a subject becomes foundational enough that I will need it again later, it g
 They should work both as a deeper refresher when I cannot watch a lecture and as a quick reference months later.
 
 - [Gradient Descent](knowledge/GRADIENT_DESCENT.md) — cost, derivatives/gradients, learning rate, parameter updates, convergence, scientific notation, and the connection to later deep learning.
+- [Python for ML — Quick Reference](knowledge/PYTHON_FOR_ML_QUICK_REFERENCE.md) — the Python/NumPy patterns I keep seeing in ML labs: shapes, indexing, loops, dot products, accumulation, normalization, feature engineering, reshaping, and a code-reading checklist.
 
 This section should grow selectively. Not every lesson deserves a document; core concepts that later knowledge depends on do.
 
