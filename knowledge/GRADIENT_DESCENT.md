@@ -603,6 +603,92 @@ So the quick pipeline is:
 real X → normalize with TRAINING mu/sigma → model → real y prediction
 ```
 
+
+## 16. Samples, features, and weights — do not mix up rows and columns
+
+This distinction caused confusion when moving from one-feature regression to multi-feature logistic regression, so it is worth making explicit.
+
+For a normal ML feature matrix:
+
+```text
+X.shape = (m, n)
+```
+
+the dimensions mean:
+
+```text
+m = number of training examples / samples / rows
+n = number of features / columns
+```
+
+The crucial rule is:
+
+> **Weights belong to FEATURES (columns), not to SAMPLES (rows).**
+
+So if:
+
+```text
+X.shape = (100, 3)
+```
+
+then there are 100 training examples but only 3 features. Therefore:
+
+```text
+w.shape = (3,)
+```
+
+There are three weights because there is one weight per feature:
+
+```text
+                 feature 0   feature 1   feature 2
+sample 0            x          x           x
+sample 1            x          x           x
+sample 2            x          x           x
+...                 ...        ...         ...
+sample 99           x          x           x
+                     ↑          ↑           ↑
+weights             w0         w1          w2
+```
+
+The **same learned weight vector** is applied to every sample.
+
+For one sample `i`:
+
+```python
+z_i = np.dot(w, X[i]) + b
+```
+
+Here:
+
+```text
+i       → which sample / row
+j       → which feature / column
+
+X[i]    → all features for sample i
+X[i,j]  → feature j of sample i
+
+w       → all feature weights
+w[j]    → weight for feature j
+```
+
+This is why `np.dot(w[i], X[i])` is conceptually wrong: `i` identifies a training example, but the weights are not indexed by training example.
+
+A reliable shape sanity check is:
+
+```text
+X.shape    = (m, n)
+X[i].shape = (n,)
+w.shape    = (n,)
+```
+
+So `X[i]` and `w` line up feature-for-feature and their dot product produces one scalar for sample `i`.
+
+The memory line:
+
+> **m rows → m examples. n columns → n features. n features → n weights.**
+
+This applies to both linear and logistic regression. The number of weights is determined by the number of input features, not by the type of regression.
+
 ---
 
 # Quick refresh — 60 seconds
