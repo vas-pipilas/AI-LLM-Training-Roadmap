@@ -689,6 +689,343 @@ The memory line:
 
 This applies to both linear and logistic regression. The number of weights is determined by the number of input features, not by the type of regression.
 
+
+---
+
+## 17. Logistic regression gradient — complete mental pipeline (ELI5)
+
+This is the section to revisit when a small block of ML code feels much denser than its line count suggests.
+
+The whole story is:
+
+> **Pick one row. Use all its features to make one prediction. Compare prediction with reality. Work out how the model knobs contributed. Accumulate those contributions for every row. Average them.**
+
+### Decode the names first
+
+```text
+X       = all input data
+y       = correct answers / labels
+m       = number of samples / rows
+n       = number of features / columns
+i       = current sample / row
+j       = current feature / column
+w       = all feature weights
+w[j]    = weight for feature j
+b       = one model bias
+z_wb    = raw weighted score before sigmoid
+f_wb    = prediction after sigmoid
+J       = cost
+dj_dw   = gradient for the weights
+dj_db   = gradient for the bias
+dj_db_i = current sample's contribution to dj_db
+```
+
+For learning purposes, read `dj_dw` simply as **gradient for w**, and `dj_db` as **gradient for b**.
+
+### Shapes already tell much of the story
+
+If:
+
+```text
+X.shape = (4, 3)
+```
+
+then:
+
+```text
+4 samples → 4 row predictions
+3 features → 3 weights → 3 weight gradients
+1 bias → 1 bias gradient
+```
+
+Memory rule:
+
+> **m rows → m samples → m predictions. n columns → n features → n weights → n weight gradients.**
+
+### Step 1 — choose one sample
+
+```python
+for i in range(m):
+```
+
+The outer loop moves down the dataset. If `i = 2`, we temporarily care only about row 2.
+
+### Step 2 — start an empty raw-score calculator
+
+```python
+z_wb = 0
+```
+
+Nothing from this sample has been added yet.
+
+### Step 3 — walk across that row's features
+
+```python
+for j in range(n):
+    z_wb += w[j] * X[i][j]
+```
+
+Here:
+
+```text
+X[i][j] = feature j belonging to sample i
+w[j]    = weight belonging to feature j
+```
+
+Example:
+
+```text
+X[i] = [10, 4, 2]
+w    = [0.5, 2.0, -1.0]
+
+j=0: 0.5 × 10 =  5
+j=1: 2.0 ×  4 =  8
+j=2: -1  ×  2 = -2
+
+sum = 11
+```
+
+This inner loop is simply the expanded version of:
+
+```python
+np.dot(w, X[i])
+```
+
+### Step 4 — add bias and finish z
+
+```python
+z_wb += b
+```
+
+Now we have `z = w·x + b`.
+
+Important:
+
+> **z is the raw score, not yet the logistic prediction.**
+
+### Step 5 — sigmoid creates ONE prediction for this row
+
+```python
+f_wb = sigmoid(z_wb)
+```
+
+Mental flow:
+
+```text
+all features in row i
+        ↓
+feature × matching weight
+        ↓
+       sum
+        ↓
+       + b
+        ↓
+        z          raw score
+        ↓
+     sigmoid
+        ↓
+      f_wb         one prediction for row i
+```
+
+All features of one sample cooperate to produce **one prediction**.
+
+### Step 6 — compare prediction with reality
+
+```python
+dj_db_i = f_wb - y[i]
+```
+
+For intuition, temporarily read this as:
+
+```text
+current sample difference = prediction - actual
+```
+
+Example:
+
+```text
+prediction = 0.80
+actual     = 1.00
+difference = -0.20
+```
+
+In this logistic-regression gradient, that same prediction-minus-actual term is useful for both bias and weight gradient contributions.
+
+### Step 7 — accumulate the bias-gradient contribution
+
+```python
+dj_db += dj_db_i
+```
+
+This is ordinary accumulator logic:
+
+```text
+sample 0 contribution
+      + sample 1 contribution
+      + sample 2 contribution
+      + ...
+```
+
+There is one `dj_db` because there is one bias `b`.
+
+### Step 8 — give every weight its own contribution
+
+```python
+for j in range(n):
+    dj_dw[j] += dj_db_i * X[i][j]
+```
+
+One sample produces one prediction difference, but every feature participated in that prediction:
+
+```text
+prediction - actual
+        │
+        ├─ × X[i][0] → contribution to gradient for w[0]
+        ├─ × X[i][1] → contribution to gradient for w[1]
+        └─ × X[i][2] → contribution to gradient for w[2]
+```
+
+Key sentence:
+
+> **One sample produces ONE prediction, but contributes to ALL feature-weight gradients.**
+
+### Why += matters
+
+```python
+dj_db += ...
+dj_dw[j] += ...
+```
+
+Each new sample must add its information to what previous samples contributed. Plain `=` would overwrite the previous value.
+
+This is the same accumulator pattern already used in:
+
+```python
+total_cost += loss
+```
+
+### Step 9 — average after visiting every row
+
+```python
+dj_dw = dj_dw / m
+dj_db = dj_db / m
+```
+
+We accumulated contributions from `m` samples, so we average them.
+
+`dj_dw` is a NumPy array, so dividing by scalar `m` divides every element:
+
+```text
+[12, 8, -4] / 4 → [3, 2, -1]
+```
+
+### The complete mental pipeline
+
+```text
+                    DATASET X
+                       │
+                choose SAMPLE i
+                       │
+                       ▼
+              ┌─────────────────┐
+              │ For FEATURE j   │
+              │ w[j] × X[i][j] │
+              └────────┬────────┘
+                       │
+                      SUM
+                       │
+                      + b
+                       │
+                       ▼
+                    z_wb
+                  RAW SCORE
+                       │
+                    sigmoid
+                       │
+                       ▼
+                    f_wb
+                  PREDICTION
+                       │
+                  compare with
+                     y[i]
+                       │
+                       ▼
+                 f_wb - y[i]
+                       │
+              ┌────────┴────────┐
+              │                 │
+              ▼                 ▼
+           dj_db_i        × X[i][j]
+              │                 │
+              ▼                 ▼
+        accumulate         accumulate
+           dj_db             dj_dw[j]
+              │                 │
+              └────────┬────────┘
+                       │
+              repeat all samples
+                       │
+                       ▼
+                 divide by m
+                       │
+                       ▼
+                FINAL GRADIENTS
+                dj_db, dj_dw
+```
+
+### Read it like a children's story
+
+> I have a table of examples. I pick one row. The row contains clues called features. Each clue has an importance called a weight. I multiply each clue by its importance and add them together, then add the bias. That gives me a raw score called z. I put z through sigmoid to get one prediction for the row. I compare the prediction with the correct answer. That difference contributes to the one bias gradient, and each feature also gets a contribution for its own weight gradient. Then I move to the next row. After every row has contributed, I average everything. Those final gradients tell gradient descent how the model parameters should be adjusted.
+
+### Five rules to drill until automatic
+
+```text
+1. i = sample / row
+2. j = feature / column
+3. w[j] belongs to feature j
+4. one row + all its features → one prediction
+5. n features → n weights → n weight gradients
+```
+
+Shortest possible pipeline:
+
+```text
+ROW i
+  ↓
+all FEATURES j × their WEIGHTS j
+  ↓
++ bias
+  ↓
+z = raw score
+  ↓
+sigmoid
+  ↓
+prediction
+  ↓
+prediction - actual
+  ↓
+gradient contributions
+  ↓
+accumulate across rows
+  ↓
+average
+```
+
+### Tomorrow's self-check
+
+Without looking at the implementation, answer:
+
+1. If `X.shape == (500, 7)`, what are `m` and `n`?
+2. How many weights exist?
+3. How many predictions are made across those 500 rows?
+4. What exactly is `X[12][3]`?
+5. Why is it `w[j]`, not `w[i]`?
+6. What is the difference between `z_wb` and `f_wb`?
+7. Why is `dj_db` scalar but `dj_dw` an array?
+8. Why does `dj_dw[j]` use `+=` instead of `=`?
+9. Why can NumPy divide the entire `dj_dw` array by scalar `m`?
+10. Tell the algorithm as a story without using the names `dj_dw` or `dj_db`.
+
 ---
 
 # Quick refresh — 60 seconds
