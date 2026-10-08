@@ -34,6 +34,21 @@ The repository also now contains a conservative ML/AI `.gitignore` so local envi
 
 Useful lesson from the setup: the Python interpreter selected by VS Code, the Conda environment active in a terminal, and the Jupyter kernel are related but separate things. The reliable check is always the interpreter that actually executes the code.
 
+### October 2026 — Course 2 Week 1 concepts documented
+
+I put the neural-network ideas from Andrew Ng's *Advanced Learning Algorithms* Week 1 into a [worked ELI5 study guide](knowledge/COURSE_2_WEEK_1_NEURAL_NETWORKS.md). This is a **study-note milestone**, not a claim that I have completed the course or mastered neural-network training.
+
+What this pass helped clarify:
+
+- One 20 × 20 digit image becomes **one** row with 400 pixel features and **one** label for the whole image. The 400 pixels do not imply 400 neurons or 400 labels.
+- The architecture `400 → 25 → 15 → 1` describes layer widths. In the NumPy/Keras convention, `W.shape = (inputs, neurons)`; `W[:, j]` selects the incoming weights for neuron `j`. The same parameters serve every training example.
+- A forward pass uses existing `W` and `b`. `compile` chooses loss and optimizer, `fit` changes parameters, and `get_weights` only lets me inspect them. A model with initial weights is built, but has not learned digit patterns yet.
+- A final sigmoid output is a continuous probability-like score; thresholding creates a 0/1 decision. Normalization changes the scale of `X`, while lambda regularization changes the training objective.
+
+Tiny reminder: for `A_in.shape = (m, 25)`, `W.shape = (25, 15)`, and `b.shape = (15,)`, `g(A_in @ W + b)` has shape `(m, 15)`. If I cannot explain that shape, return to the guide before adding more framework syntax.
+
+Still to learn properly: how backpropagation calculates the gradients for all layers, how Adam uses them internally, and how later course material guides activation and architecture choices. The guide names these pieces without treating them as already understood.
+
 ## Concepts to revisit
 
 Add entries here as they appear during training. A useful entry answers three questions:
