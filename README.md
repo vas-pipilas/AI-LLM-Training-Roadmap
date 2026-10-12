@@ -43,6 +43,8 @@ They should work both as a deeper refresher when I cannot watch a lecture and as
 - [TensorFlow / Keras for ML — Detailed Cheat Sheet](knowledge/TENSORFLOW_KERAS_FOR_ML.md) — Dense layers, Sequential models, input/output shapes, activations, parameters, normalization, training, prediction, and the bridge from NumPy to neural networks.
 - [Course 2 Week 1 — Neural Networks, ELI5 Study Guide](knowledge/COURSE_2_WEEK_1_NEURAL_NETWORKS.md) — a worked path from 20 × 20 digit pixels through the 400 → 25 → 15 → 1 network, with shapes, Keras and NumPy forward passes, common mistakes, and self-checks.
 
+- [Course 2 — Backpropagation using a Computation Graph, ELI5 Guide](knowledge/COURSE_2_BACKPROPAGATION_COMPUTATION_GRAPH.md) — tiny-nudge derivatives, forward and backward passes, the chain rule, two worked lab examples, and how gradients feed parameter updates.
+
 This section should grow selectively. Not every lesson deserves a document; core concepts that later knowledge depends on do.
 
 ## Repository map

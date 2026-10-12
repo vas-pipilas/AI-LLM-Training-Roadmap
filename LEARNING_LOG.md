@@ -49,6 +49,14 @@ Tiny reminder: for `A_in.shape = (m, 25)`, `W.shape = (25, 15)`, and `b.shape = 
 
 Still to learn properly: how backpropagation calculates the gradients for all layers, how Adam uses them internally, and how later course material guides activation and architecture choices. The guide names these pieces without treating them as already understood.
 
+### October 2026 — Backpropagation optional lab documented
+
+Added a [beginner-friendly computation-graph guide](knowledge/COURSE_2_BACKPROPAGATION_COMPUTATION_GRAPH.md) based on the optional lab from Andrew Ng's *Advanced Learning Algorithms*. This records a **study resource**, not course completion or a claim of mastery.
+
+The guide connects the earlier gradient-descent notes to the backward calculation: save values during the forward pass, then multiply local derivatives by the sensitivity arriving from the loss. Its two worked reminders are `J = (2 + 3*w)**2` at `w = 3` (gradient 66), and the single linear neuron with `x = 2, w = -2, b = 8, y = 1` (weight gradient 6, bias gradient 3).
+
+Keep the jobs separate: backpropagation calculates gradients; gradient descent or Adam uses them to update parameters. The guide includes a separate update example and short exercises with answers. Full multilayer backpropagation and Adam's internal mechanics remain topics to study further.
+
 ## Concepts to revisit
 
 Add entries here as they appear during training. A useful entry answers three questions:
