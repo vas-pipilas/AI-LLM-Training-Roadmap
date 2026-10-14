@@ -57,6 +57,18 @@ The guide connects the earlier gradient-descent notes to the backward calculatio
 
 Keep the jobs separate: backpropagation calculates gradients; gradient descent or Adam uses them to update parameters. The guide includes a separate update example and short exercises with answers. Full multilayer backpropagation and Adam's internal mechanics remain topics to study further.
 
+### October 2026 — Week 3 model evaluation and preprocessing documented
+
+Added a [fit / transform / predict deep dive](knowledge/FIT_TRANSFORM_PREDICT_DEEP_DIVE.md) and a [copy-friendly sklearn cheat sheet](knowledge/SKLEARN_PREPROCESSING_CHEAT_SHEET.md), grounded in Course 2 Week 3's optional lab “Model Evaluation and Selection.” This is a **study-resource milestone**, not course completion or a claim of mastery.
+
+The question to keep returning to is: **which object is being fitted, and what does it save?** A scaler saves training-column mean and scale; a polynomial transformer records the feature mapping; a prediction model learns weights and biases. Fitting the same scaler again on CV data overwrites its training statistics. `transform` reuses them.
+
+Tiny reminder: training values `[10, 20, 30]` give mean 20 and scale about 8.165, so a new value 40 becomes about 2.449. Refit on `[40, 50]` and the ruler becomes mean 45, scale 5; the same 40 now becomes -1. The trained model does not automatically adapt to that changed meaning.
+
+The lab pattern to practice is **split 60/20/20 → fit preparation and model on training → select degree or architecture using CV error → evaluate the chosen model on test**. Polynomial predictions must keep the same `poly → scaler → model` recipe and the same `degree - 1` index across all three saved lists. A Pipeline keeps those steps together. For binary models that output logits, evaluation adds sigmoid, a threshold, and the fraction misclassified.
+
+The runnable NumPy/sklearn examples were checked in the local `ml-foundations` environment. They use tiny or generated data rather than reproducing the course's CSV results. Still worth revisiting: why each k-fold training split needs its own fitted preprocessing, how high polynomial degrees affect conditioning and overfitting, and when a production split should follow time or groups instead of random rows.
+
 ## Concepts to revisit
 
 Add entries here as they appear during training. A useful entry answers three questions:

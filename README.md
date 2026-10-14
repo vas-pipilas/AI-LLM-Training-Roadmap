@@ -44,6 +44,8 @@ They should work both as a deeper refresher when I cannot watch a lecture and as
 - [Course 2 Week 1 — Neural Networks, ELI5 Study Guide](knowledge/COURSE_2_WEEK_1_NEURAL_NETWORKS.md) — a worked path from 20 × 20 digit pixels through the 400 → 25 → 15 → 1 network, with shapes, Keras and NumPy forward passes, common mistakes, and self-checks.
 
 - [Course 2 — Backpropagation using a Computation Graph, ELI5 Guide](knowledge/COURSE_2_BACKPROPAGATION_COMPUTATION_GRAPH.md) — tiny-nudge derivatives, forward and backward passes, the chain rule, two worked lab examples, and how gradients feed parameter updates.
+- [Fit, Transform, and Predict — ELI5 Deep Dive](knowledge/FIT_TRANSFORM_PREDICT_DEEP_DIVE.md) — what each fit learns, scaler overwrite behavior, train-only preparation, polynomial features, shapes, model selection, and the prediction path from raw inputs.
+- [sklearn Preprocessing — Copy-Friendly Cheat Sheet](knowledge/SKLEARN_PREPROCESSING_CHEAT_SHEET.md) — runnable manual and Pipeline examples, CV degree selection, matching preprocessing/model objects, and binary classification evaluation.
 
 This section should grow selectively. Not every lesson deserves a document; core concepts that later knowledge depends on do.
 
