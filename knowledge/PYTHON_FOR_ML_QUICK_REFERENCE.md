@@ -577,3 +577,142 @@ X = x.reshape(-1, 1)
 ```
 
 The goal is not to memorize this page. Keep using these patterns until they become boring.
+
+---
+
+## 20. Diagnosing high bias and high variance (Course 2, Week 3)
+
+**ELI5:** high bias = model cannot learn even the practice questions; high variance = model memorizes practice questions but fails new questions. Compare training error to a realistic baseline, then CV error to training error. Both can be high at once.
+
+| Signal | Interpretation | What to try |
+|---|---|---|
+| Train error far above baseline | High bias / underfitting | More useful features, higher polynomial degree/model capacity, weaker regularization |
+| Train error near baseline but CV much worse | High variance / overfitting | More representative training examples, fewer irrelevant features, stronger regularization |
+| Train and CV close to baseline | Promising generalization | Confirm once on untouched test data |
+
+**Error comparison:** use the *same metric* on train, CV, and baseline. A high train–CV gap suggests variance; a high baseline–train gap suggests bias. These are diagnostic clues, not rigid numerical thresholds.
+
+```python
+baseline_error = 0.02  # e.g. human or credible reference error, 2%
+train_error = 0.03
+cv_error = 0.19
+
+bias_gap = train_error - baseline_error
+variance_gap = cv_error - train_error
+
+print(f"Bias gap: {bias_gap:.1%}")
+print(f"Generalization gap: {variance_gap:.1%}")
+# 1% bias gap; 16% generalization gap -> high-variance warning
+```
+
+### 20.1 Fit preprocessing only on training examples
+
+```python
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)  # learns train mean/std
+X_cv_scaled = scaler.transform(X_cv)             # reuses train mean/std
+X_test_scaled = scaler.transform(X_test)         # reuses train mean/std
+
+# scaler.fit(X_cv) would OVERWRITE mean_ and scale_ -> don't do it!
+print(scaler.mean_, scaler.scale_)
+```
+
+### 20.2 Compare polynomial complexity on CV (avoid test leakage)
+
+```python
+import numpy as np
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+
+candidates = []
+for degree in range(1, 11):
+    model = make_pipeline(
+        PolynomialFeatures(degree=degree, include_bias=False),
+        StandardScaler(),
+        LinearRegression(),
+    )
+    model.fit(X_train, y_train)
+    train_mse = mean_squared_error(y_train, model.predict(X_train))
+    cv_mse = mean_squared_error(y_cv, model.predict(X_cv))
+    candidates.append((degree, model, train_mse, cv_mse))
+
+best_degree, best_model, best_train_mse, best_cv_mse = min(
+    candidates, key=lambda row: row[3]
+)
+print(best_degree, best_train_mse, best_cv_mse)
+
+# Final evaluation only AFTER model selection:
+test_mse = mean_squared_error(y_test, best_model.predict(X_test))
+print("Final test MSE:", test_mse)
+```
+
+**Why Pipeline?** It remembers the polynomial expansion and fitted training scaler for each candidate, so `predict(X_cv)` and `predict(X_test)` apply the same preprocessing automatically. `mean_squared_error` divides by m; Andrew Ng's lab divides this result by 2 to match its 1/(2m) convention. Be consistent when comparing models.
+
+### 20.3 Regularization sweep: Ridge alpha (lambda-like strength)
+
+```python
+from sklearn.linear_model import Ridge
+
+results = []
+for alpha in [0.01, 0.1, 1, 10, 100]:
+    model = make_pipeline(
+        PolynomialFeatures(degree=4, include_bias=False),
+        StandardScaler(),
+        Ridge(alpha=alpha),
+    )
+    model.fit(X_train, y_train)
+    cv_mse = mean_squared_error(y_cv, model.predict(X_cv))
+    results.append((alpha, cv_mse, model))
+
+best_alpha, best_cv_mse, best_model = min(results, key=lambda row: row[1])
+print("Selected alpha:", best_alpha)
+```
+
+**Direction:** lower alpha = weaker penalty, often helps underfitting; higher alpha = stronger penalty, may help overfitting. Too much alpha causes underfitting. Ridge's `alpha` is not numerically identical to every textbook's lambda convention.
+
+### 20.4 Learning curves: does more training data help?
+
+```python
+from sklearn.model_selection import learning_curve
+
+sizes, train_scores, cv_scores = learning_curve(
+    make_pipeline(StandardScaler(), Ridge(alpha=1.0)),
+    X_train, y_train,
+    train_sizes=np.linspace(0.2, 1.0, 5),
+    cv=5,
+    scoring="neg_mean_squared_error",
+)
+train_mses = -train_scores.mean(axis=1)
+cv_mses = -cv_scores.mean(axis=1)
+print(list(zip(sizes, train_mses, cv_mses)))
+```
+
+**Note:** `learning_curve` performs its own cross-validation *inside the supplied training data*. Keep the final test set separate. More data can reduce a variance gap, but often won't fix a model that is fundamentally too simple.
+
+### 20.5 Classification error (not the same as training loss)
+
+```python
+import tensorflow as tf
+
+# Model's final layer is linear; BinaryCrossentropy(from_logits=True)
+logits = model.predict(X_cv_scaled, verbose=0)
+probabilities = tf.math.sigmoid(logits).numpy()
+predicted_labels = (probabilities >= 0.5).astype(int)
+classification_error = np.mean(predicted_labels.reshape(-1) != np.asarray(y_cv).reshape(-1))
+print(f"CV classification error: {classification_error:.1%}")
+```
+
+Use this classification example with a **trained binary neural-network model that outputs logits**. For a sigmoid-output model, do not apply sigmoid a second time. For regression, use MSE (or another appropriate regression metric), not a 0.5 classification threshold.
+
+### 20.6 Real AI/LLM engineering connection
+
+- Fine-tuning: memorizing training prompts but failing unseen prompts resembles high variance.
+- RAG: poor answers can come from retrieval, context, prompting, or model behavior; do not automatically label every failure bias/variance.
+- Evaluate on representative, held-out examples. Prevent train/dev/test leakage and monitor real-world drift.
+- Diagnose first; change one controlled factor; measure again.
+
+**One-minute memory rule:** baseline vs train = bias clue; train vs CV = variance clue; CV chooses configuration; test measures the final choice. More complexity can fix bias and worsen variance. Stronger regularization can reduce variance and worsen bias.
