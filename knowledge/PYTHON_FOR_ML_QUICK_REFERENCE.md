@@ -716,3 +716,83 @@ Use this classification example with a **trained binary neural-network model tha
 - Diagnose first; change one controlled factor; measure again.
 
 **One-minute memory rule:** baseline vs train = bias clue; train vs CV = variance clue; CV chooses configuration; test measures the final choice. More complexity can fix bias and worsen variance. Stronger regularization can reduce variance and worsen bias.
+
+---
+
+## 21. Lambda (λ): the regularization brake — ELI5
+
+**Imagine a brake on the model's weights.** L2 regularization discourages very large weights. The model must balance fitting the training data against keeping weights reasonably small.
+
+- **Small λ → weak brake → more flexibility → can overfit (high variance).**
+- **Large λ → strong brake → less flexibility → can underfit (high bias).**
+- **Goal: choose λ by cross-validation, not by maximizing or minimizing it.**
+
+| Diagnostic signal | Possible action | Why |
+|---|---|---|
+| Train error far above achievable baseline (high bias) | **Decrease λ** if regularization is too strong | Give the model more freedom to fit training data |
+| Train error low, CV error much higher (high variance) | **Increase λ** if overfitting is the issue | Penalize unnecessarily large weights |
+| Both train and CV errors acceptable | Keep/tune λ by CV | Avoid fixing something that works |
+
+**Course-style L2 objective:**
+
+```text
+J(w,b) = prediction_error + (lambda_ / (2*m)) * sum(w[j]**2)
+```
+
+Typically **bias/intercept b is not penalized**. λ changes the optimization objective; it does *not* directly multiply all weights or impose a hard weight limit.
+
+### Tiny numeric penalty example
+
+```python
+import numpy as np
+
+w = np.array([10.0, 2.0])
+m = 10
+
+for lambda_ in [0.0, 1.0, 10.0]:
+    penalty = (lambda_ / (2 * m)) * np.sum(w ** 2)
+    print(f"lambda={lambda_:>4}: L2 penalty={penalty:.1f}")
+
+# lambda= 0.0: L2 penalty=0.0
+# lambda= 1.0: L2 penalty=5.2
+# lambda=10.0: L2 penalty=52.0
+```
+
+Here the weights are held fixed to **illustrate the penalty**. During real training, changing λ generally changes the learned weights too.
+
+### Compare regularization strengths properly
+
+```python
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import Ridge
+from sklearn.metrics import mean_squared_error
+
+results = []
+for strength in [0.01, 0.1, 1.0, 10.0, 100.0]:
+    model = make_pipeline(StandardScaler(), Ridge(alpha=strength))
+    model.fit(X_train, y_train)   # scaler fits TRAIN only
+    train_mse = mean_squared_error(y_train, model.predict(X_train))
+    cv_mse = mean_squared_error(y_cv, model.predict(X_cv))
+    results.append((strength, train_mse, cv_mse, model))
+
+best_alpha, train_mse, cv_mse, best_model = min(
+    results, key=lambda item: item[2]  # choose lowest CV error
+)
+print(f"Chosen Ridge alpha={best_alpha}, train MSE={train_mse:.3f}, CV MSE={cv_mse:.3f}")
+
+# Evaluate on untouched X_test/y_test only AFTER selecting the configuration:
+test_mse = mean_squared_error(y_test, best_model.predict(X_test))
+```
+
+**Naming trap:**
+- Andrew Ng gradient descent **α (alpha)** = *learning rate*, the size of an update step.
+- Andrew Ng regularization **λ (lambda)** = *penalty strength*.
+- scikit-learn **Ridge(alpha=...)** = *regularization strength*, **not** learning rate.
+- Ridge's numeric `alpha` convention is not identical to every textbook's λ scaling.
+
+**Important nuance:** λ adjustments are possible remedies, not guarantees. Feature quality, model capacity, data quantity, and distribution shift also affect bias/variance. Use comparable train/CV metrics and a credible baseline.
+
+**AI/LLM connection:** Weight decay in neural-network/LLM training is a related regularization idea; its implementation (e.g. AdamW decoupled weight decay) is not mathematically identical to every L2-penalty setup. Regularization is important for fine-tuning and generalization, but LLM engineering also requires data curation, retrieval evaluation, deployment, monitoring, and safety.
+
+**Memorize:** high bias → consider **less** regularization (λ ↓); high variance → consider **more** regularization (λ ↑); **CV error decides**.
