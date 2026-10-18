@@ -31,6 +31,12 @@ The loop for this project is:
 
 Course completion is useful, but it is not the finish line. Projects and the ability to explain/debug my own work matter more.
 
+## Python coding cheat sheet — start here
+
+[**Canonical Python ML Coding Cheat Sheet**](knowledge/PYTHON_ML_CODING_CHEAT_SHEET.md) — an indexed, beginner-to-intermediate syntax reference for Python essentials, NumPy, Matplotlib, TensorFlow/Keras, sklearn preprocessing, evaluation, and regularization. Includes runnable examples, expected shapes, common mistakes, and copy-friendly recipes.
+
+Extend this same canonical file as I learn new coding topics. Keep the focused notes below as deeper references. GitHub is the durable source of truth; chat memory cannot store the full sheet verbatim.
+
 ## Core knowledge notes
 
 When a subject becomes foundational enough that I will need it again later, it gets its own detailed reference under `knowledge/`. These are not copied course notes. They are written around the explanations, mistakes, questions, and mental models that actually helped the subject click for me.

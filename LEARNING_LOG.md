@@ -69,6 +69,18 @@ The lab pattern to practice is **split 60/20/20 → fit preparation and model on
 
 The runnable NumPy/sklearn examples were checked in the local `ml-foundations` environment. They use tiny or generated data rather than reproducing the course's CSV results. Still worth revisiting: why each k-fold training split needs its own fitted preprocessing, how high polynomial degrees affect conditioning and overfitting, and when a production split should follow time or groups instead of random rows.
 
+### 18 October 2026 — Canonical Python ML coding cheat sheet
+
+Added the [canonical Python ML Coding Cheat Sheet](knowledge/PYTHON_ML_CODING_CHEAT_SHEET.md) as the easy-to-find syntax entry point, linked from the README. This is a study-resource milestone, not a claim of mastery or course completion.
+
+It connects Python essentials, NumPy shapes/axes/broadcasting and stable calculations, Matplotlib plots, TensorFlow/Keras outputs and losses, GradientTape, sklearn preparation/Pipeline, train/CV/test evaluation, and bias/variance/regularization. Beginner refreshers are separated from intermediate practice extensions. The existing detailed notes remain in place and are linked.
+
+The reminders I most want to keep: fit learns the ruler, transform reuses it; compare prediction/target shapes before computing errors; logits need the matching loss and threshold; learning-rate alpha is different from Ridge alpha; lambda up strengthens regularization and can increase bias, while lambda down can increase variance. CV decides the useful setting.
+
+**Ongoing rule:** extend this same canonical cheat sheet as I learn new coding topics. Add runnable syntax, expected shapes/output, pitfalls, and navigation links; record meaningful additions here. GitHub is the durable source of truth, not a promise that chat memory holds the sheet verbatim.
+
+Verification details are recorded at the end of the sheet. NumPy/Matplotlib/sklearn examples are checked locally where available; TensorFlow is unavailable here, so its examples receive syntax checks and API review without a runtime-test claim.
+
 ## Concepts to revisit
 
 Add entries here as they appear during training. A useful entry answers three questions:
