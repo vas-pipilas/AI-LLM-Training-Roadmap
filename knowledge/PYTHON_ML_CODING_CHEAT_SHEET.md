@@ -23,6 +23,7 @@
 | Beginner → intermediate | [10. sklearn preprocessing and evaluation](#10-sklearn-preprocessing-and-evaluation) | Fit/transform, Pipeline, train/CV/test |
 | Intermediate practice | [11. Bias, variance, and regularization](#11-bias-variance-and-regularization) | Diagnose errors, tune λ, learning curves |
 | Quick lookup | [12. Debugging and copy recipes](#12-debugging-and-copy-recipes) | Common mistakes and tiny reusable checks |
+| Beginner → intermediate | [12a. Decision trees](#12a-decision-trees--concise-syntax) | Fit/predict, probabilities, growth controls; deeper note linked |
 | Reference | [13. Related notes and API sources](#13-related-notes-and-api-sources) | Deeper explanations and official docs |
 | Maintenance | [14. How this sheet grows](#14-how-this-sheet-grows) | Update policy and verification record |
 
@@ -962,10 +963,42 @@ Ravel is appropriate here because each example has exactly one label/output; fla
 
 **Code-reading order:** inputs → shapes → operation/loop → prediction → comparison with y → accumulated quantity → return value. Translate the important line into plain language before changing it.
 
+## 12a. Decision trees — concise syntax
+
+For entropy calculations, lab-style helper functions, split selection, overfitting and a full CV example, see [Decision Trees — detailed study note](DECISION_TREES.md). Its illustrative calculations are explicitly distinguished from the original lab results, which still need the original notebook excerpt.
+
+```python
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier, export_text
+
+data = load_iris()
+X_train, X_test, y_train, y_test = train_test_split(
+    data.data, data.target, test_size=0.2,
+    stratify=data.target, random_state=42,
+)
+tree = DecisionTreeClassifier(
+    criterion="entropy", max_depth=3,
+    min_samples_leaf=2, random_state=42,
+)
+tree.fit(X_train, y_train)
+labels = tree.predict(X_test)            # (30,)
+probabilities = tree.predict_proba(X_test)  # (30, 3)
+print(tree.classes_)                    # [0 1 2]; probability-column order
+print(tree.score(X_test, y_test))        # accuracy; no fixed score promised
+print(export_text(tree, feature_names=list(data.feature_names)))
+assert labels.shape == (30,)
+assert probabilities.shape == (30, 3)
+one_label = tree.predict(X_test[:1])     # (1, 4) input -> (1,) output
+```
+
+fit learns rules; predict follows them; predict_proba estimates class proportions in the reached leaf. Keep X two-dimensional and feature order unchanged. Standalone trees generally need no scaling. Smaller max_depth or larger min_samples_leaf restrict growth; ccp_alpha controls pruning. Select these with training/CV data before final test evaluation. sklearn's default criterion is Gini; entropy is specified here to connect to the study calculation. Original teaching example, not an exact course lab reproduction.
+
 ## 13. Related notes and API sources
 
 The focused notes remain useful; this page adds one canonical syntax entry point rather than replacing them:
 
+- [Decision Trees](DECISION_TREES.md): worked illustrative entropy/gain, lab-style helpers, sklearn CV, overfitting and telecom applications; original notebook calculations pending.
 - [Python for ML — Quick Reference](PYTHON_FOR_ML_QUICK_REFERENCE.md): original Python patterns, code-reading checklist, and detailed bias/variance and λ reminders (sections 20–21).
 - [NumPy for ML](NUMPY_FOR_ML.md): focused arrays, vectorization, shapes, weights, thresholding.
 - [TensorFlow/Keras for ML](TENSORFLOW_KERAS_FOR_ML.md): focused layer, training, and forward-pass explanations.
@@ -991,3 +1024,6 @@ Official API references for checking details and extending examples:
 5. Update the learning log when a meaningful topic is added. Commit changes to GitHub so this stays retrievable across chats.
 
 **Verification, 18 October 2026:** all 29 Python blocks passed syntax checks. Executed 22 Python/NumPy/Matplotlib/sklearn blocks, including the explicit Ridge continuation, embedded numerical/shape assertions, model-selection and metric examples, and two successful PNG exports. Local navigation anchors and relative repository links passed checks. Environment: NumPy 2.5.2, Matplotlib 3.11.2, scikit-learn 1.9.1. The remaining 7 TensorFlow blocks were syntax-checked and API-reviewed; TensorFlow is not installed in the verification environment, so those blocks were **not runtime-tested**. Learned model scores are deliberately not promised.
+
+
+**Addition, 19 October 2026:** added section 12a and the dedicated Decision Trees link. Reviewed against official sklearn APIs; the new Python example was not runtime-tested in this task environment. The 18 October verification record above remains unchanged.
