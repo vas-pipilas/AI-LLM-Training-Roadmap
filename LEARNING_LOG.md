@@ -81,6 +81,16 @@ The reminders I most want to keep: fit learns the ruler, transform reuses it; co
 
 Verification details are recorded at the end of the sheet. NumPy/Matplotlib/sklearn examples are checked locally where available; TensorFlow is unavailable here, so its examples receive syntax checks and API review without a runtime-test claim.
 
+### 19 October 2026 — Decision Trees reference added
+
+Added one [dedicated Decision Trees study note](knowledge/DECISION_TREES.md) and a concise syntax section in the existing [canonical Python ML coding cheat sheet](knowledge/PYTHON_ML_CODING_CHEAT_SHEET.md#12a-decision-trees--concise-syntax). No second mega cheat sheet was created. This records a study resource, not course completion.
+
+The note explains entropy, weighted information gain, row-index splitting, the lab-style helper functions, recursion/stopping, sklearn fit/predict/probabilities, CV selection, overfitting and possible telecom applications.
+
+**Still pending:** the exact earlier Andrew Ng lab arrays, calculations and printed outputs were unavailable. The original teaching examples are labeled as such; they do not claim to preserve those missing results. Incorporate the source excerpt in the same note when available.
+
+Verification: illustrative entropy/gain arithmetic checked independently; sklearn APIs reviewed against official documentation. Python examples were not runtime-tested because this task environment has no usable Python runtime. Existing verification records are preserved.
+
 ## Concepts to revisit
 
 Add entries here as they appear during training. A useful entry answers three questions:
