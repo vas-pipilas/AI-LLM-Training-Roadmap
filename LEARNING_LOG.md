@@ -87,9 +87,9 @@ Added one [dedicated Decision Trees study note](knowledge/DECISION_TREES.md) and
 
 The note explains entropy, weighted information gain, row-index splitting, the lab-style helper functions, recursion/stopping, sklearn fit/predict/probabilities, CV selection, overfitting and possible telecom applications.
 
-**Still pending:** the exact earlier Andrew Ng lab arrays, calculations and printed outputs were unavailable. The original teaching examples are labeled as such; they do not claim to preserve those missing results. Incorporate the source excerpt in the same note when available.
+**Updated from the supplied lab handoff:** the same note now reproduces the original ten-row Andrew Ng ungraded lab data, four functions, root gains and depth-2 leaves, with a code walkthrough. The four-row example remains explicitly illustrative. Original lab assumptions about empty children and subset-local indices are distinguished from the safer reusable helpers.
 
-Verification: illustrative entropy/gain arithmetic checked independently; sklearn APIs reviewed against official documentation. Python examples were not runtime-tested because this task environment has no usable Python runtime. Existing verification records are preserved.
+Verification update: all five Decision Trees Python blocks and the canonical sheet's section 12a sklearn example ran offline with Python 3.12.14, NumPy 2.5.2, scikit-learn 1.9.1 and Matplotlib 3.11.2. Root calculations, split indices, depth-2 leaves, empty-branch behavior and prediction/probability assertions passed; the plot exported with Agg. The full course notebook and GUI display were not tested. Existing verification records for other topics are preserved.
 
 ## Concepts to revisit
 

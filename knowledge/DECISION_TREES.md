@@ -2,7 +2,7 @@
 
 **Added: 19 October 2026.** A deeper companion to the [canonical Python ML coding cheat sheet](PYTHON_ML_CODING_CHEAT_SHEET.md). This is a study resource, not course completion.
 
-**Source boundary:** the earlier chat's exact Andrew Ng notebook, input arrays, and printed calculations were not available when this note was prepared. The examples below are original teaching examples using the lab's entropy → split → information gain → best split workflow. They are not a transcription of the user's lab results. Preserve the original notebook calculations here once supplied; do not replace them with invented “expected lab output.”
+**Source boundary:** section 3a faithfully reproduces the original Andrew Ng ungraded Decision Trees lab excerpt supplied in the user's handoff, including its ten-row data and calculations. The four-row example is illustrative; section 4 provides separately labeled safer reusable helpers. The sklearn examples and practical explanations are independent teaching material.
 
 ## 1. What a tree learns
 
@@ -26,7 +26,7 @@ H(p) = -p * log2(p) - (1-p) * log2(1-p)
 | Half 0, half 1 | 0.5 | 1 | Most mixed binary node |
 | Three 1, one 0 | 0.75 | 0.811278 | Mixed, but one class dominates |
 
-The logarithm uses base 2. Treat the limiting term 0 * log2(0) as zero; do not actually evaluate log2(0). An empty node has no useful split: the helper below returns zero entropy so its zero-weight contribution is safe. Entropy measures label mixture, not classification accuracy.
+The logarithm uses base 2. Treat the limiting term 0 * log2(0) as zero; do not actually evaluate log2(0). An empty node has no useful split: section 4's reusable helper returns zero entropy so its zero-weight contribution is safe. Entropy measures label mixture, not classification accuracy.
 
 ## 3. Information gain: did the question help?
 
@@ -38,7 +38,7 @@ gain = parent entropy
 
 The weights matter: a large impure child must count more than a tiny pure one.
 
-**Original four-row calculation:** parent labels are [1, 1, 1, 0]. A binary feature sends two positive examples left and [1, 0] right.
+**Illustrative four-row calculation (not the Andrew Ng lab data):** parent labels are [1, 1, 1, 0]. A binary feature sends two positive examples left and [1, 0] right.
 
 - Parent: H(0.75) = 0.811278.
 - Left: H(1) = 0; right: H(0.5) = 1.
@@ -47,9 +47,152 @@ The weights matter: a large impure child must count more than a tiny pure one.
 
 A feature putting every example in one branch gives zero reduction. At each node, compare candidate splits on the rows reaching that node. The greedy choice maximizes the immediate gain; it does not prove that the resulting whole tree is globally optimal.
 
+## 3a. Andrew Ng ungraded Decision Trees lab — faithful reproduction
+
+**Source:** the user's handoff supplies the original ten-row arrays, feature mapping, four function definitions, root results and depth-2 structure reproduced here. This is a reproduction of that supplied lab excerpt, not a claim to have retrieved or executed the complete course notebook. The four-row example in section 3 remains a separate illustrative example.
+
+### Original data and functions
+
+This block is self-contained. The function logic below preserves the supplied lab code, including its assumptions about nonempty children.
+
+```python
+import numpy as np
+
+X_train = np.array([
+    [1, 1, 1],
+    [0, 0, 1],
+    [0, 1, 0],
+    [1, 0, 1],
+    [1, 1, 1],
+    [1, 1, 0],
+    [0, 0, 0],
+    [1, 1, 0],
+    [0, 1, 0],
+    [0, 1, 0],
+])
+y_train = np.array([1, 1, 0, 0, 1, 1, 0, 1, 0, 0])
+feature_names = ["Ear Shape", "Face Shape", "Whiskers"]
+
+def entropy(p):
+    if p == 0 or p == 1:
+        return 0
+    else:
+        return -p * np.log2(p) - (1 - p) * np.log2(1 - p)
+
+def split_indices(X, index_feature):
+    left_indices, right_indices = [], []
+    for i, x in enumerate(X):
+        if x[index_feature] == 1:
+            left_indices.append(i)
+        else:
+            right_indices.append(i)
+    return left_indices, right_indices
+
+def weighted_entropy(X, y, left_indices, right_indices):
+    w_left = len(left_indices) / len(X)
+    w_right = len(right_indices) / len(X)
+    p_left = sum(y[left_indices]) / len(left_indices)
+    p_right = sum(y[right_indices]) / len(right_indices)
+    return w_left * entropy(p_left) + w_right * entropy(p_right)
+
+def information_gain(X, y, left_indices, right_indices):
+    p_node = sum(y) / len(y)
+    h_node = entropy(p_node)
+    return h_node - weighted_entropy(X, y, left_indices, right_indices)
+
+print("Root entropy:", entropy(sum(y_train) / len(y_train)))
+for feature, name in enumerate(feature_names):
+    left, right = split_indices(X_train, feature)
+    gain = information_gain(X_train, y_train, left, right)
+    print(f"{name}: {gain:.2f}")
+```
+
+Expected printed results:
+
+```text
+Root entropy: 1.0
+Ear Shape: 0.28
+Face Shape: 0.03
+Whiskers: 0.12
+```
+
+| Column index | Feature | Value 1 means |
+| --- | --- | --- |
+| 0 | Ear Shape | Pointy |
+| 1 | Face Shape | Round |
+| 2 | Whiskers | Present |
+
+X_train has shape (10, 3), y_train has shape (10,). Five labels are 1 and five are 0, so p_node = 5/10 = 0.5 and H(0.5) = 1 bit.
+
+### Walk through the code
+
+1. **entropy(p)** takes a scalar class-1 fraction, not a label array. The two endpoint checks avoid evaluating log2(0); otherwise both class contributions are added.
+2. **enumerate(X)** returns a row number i and its feature row x. Testing x[index_feature] selects one column; append(i) stores the row number, not the feature or label. With the full X_train, these are the original row IDs 0 through 9.
+3. **y[left_indices]** selects the aligned target labels. Since the labels are 0/1, sum counts positive examples; dividing by the child size gives its positive fraction.
+4. **w_left and w_right** measure each child's share of the rows passed as X. Multiplying entropy by these shares prevents a small child from counting as much as a large child.
+5. **information_gain** computes parent entropy from the supplied y and subtracts weighted child entropy. Each candidate at a given node uses the same parent rows; the largest gain is the greedy choice.
+
+### Verified root calculations
+
+For Ear Shape, the original split is:
+
+- Left, feature 0 == 1: **[0, 3, 4, 5, 7]**, labels [1, 0, 1, 1, 1], p_left = 4/5.
+- Right, feature 0 == 0: **[1, 2, 6, 8, 9]**, labels [1, 0, 0, 0, 0], p_right = 1/5.
+- Both children have entropy 0.7219280948873623 bits; both weights are 5/10.
+- Weighted entropy = (5/10)H(4/5) + (5/10)H(1/5) = **0.7219280948873623**.
+- Information gain = 1 - 0.7219280948873623 = **0.2780719051126377 bits**.
+
+| Root feature | Left row IDs (value 1) | Right row IDs (value 0) | p_left | p_right | Weighted entropy | Gain (bits) | Printed |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Ear Shape (0) | [0, 3, 4, 5, 7] | [1, 2, 6, 8, 9] | 4/5 | 1/5 | 0.7219280948873623 | 0.2780719051126377 | 0.28 |
+| Face Shape (1) | [0, 2, 4, 5, 7, 8, 9] | [1, 3, 6] | 4/7 | 1/3 | 0.9651484454403230 | 0.0348515545596770 | 0.03 |
+| Whiskers (2) | [0, 1, 3, 4] | [2, 5, 6, 7, 8, 9] | 3/4 | 1/3 | 0.8754887502163469 | 0.1245112497836531 | 0.12 |
+
+Rounding is only for display; compare unrounded gains during training.
+
+### The supplied tree at max_depth=2
+
+The root is depth 0. Every list below contains **original training row IDs**; value 1 follows the lab's left branch.
+
+```text
+depth 0: Ear Shape (feature 0), rows [0,1,2,3,4,5,6,7,8,9]
+  left  [0,3,4,5,7], depth 1: Face Shape (feature 1)
+    left  [0,4,5,7], depth 2: all y=1
+    right [3],       depth 2: all y=0
+  right [1,2,6,8,9], depth 1: Whiskers (feature 2)
+    left  [1],       depth 2: all y=1
+    right [2,6,8,9], depth 2: all y=0
+```
+
+Each depth-1 parent has entropy 0.7219280948873623. Its selected split creates two pure leaves, so weighted child entropy is 0 and node-local gain is 0.7219280948873623. All ten training labels are separated correctly; this is a training-data result, not evidence of accuracy on unseen examples.
+
+### Original assumptions versus safer reusable helpers
+
+**Empty children:** the original weighted_entropy divides by both child sizes unconditionally. A constant feature produces an empty child, so the calculation can raise ZeroDivisionError or produce NaN/warnings depending on scalar types. The entropy endpoint check does not fix division by zero that happens before entropy is called. Preserve that behavior in this reproduction; use the separate helpers in section 4 when empty branches are possible. An empty parent is also unsupported by the original code.
+
+**Node-specific indexing:** split_indices enumerates whichever X it receives, starting at zero. On X_train it returns original IDs. On X_train[node_ids] it returns positions within that subset. To reuse the original functions below the root, pass matching X_node and y_node, then map local positions back to original IDs. This continuation demonstrates the mapping; it is explanatory glue, not an additional original lab function.
+
+```python
+# Continue the original lab block above.
+node_ids = np.array([1, 2, 6, 8, 9])  # right child of the root
+X_node, y_node = X_train[node_ids], y_train[node_ids]
+left_local, right_local = split_indices(X_node, 2)
+assert left_local == [0] and right_local == [1, 2, 3, 4]
+left_original = node_ids[left_local].tolist()
+right_original = node_ids[right_local].tolist()
+assert left_original == [1]
+assert right_original == [2, 6, 8, 9]
+assert np.isclose(
+    information_gain(X_node, y_node, left_local, right_local),
+    0.7219280948873623,
+)
+```
+
+Do not apply these local positions to y_train, and do not pass full-dataset X/y while evaluating a child's split: that would use the wrong labels, denominator or parent entropy. Section 4 instead keeps full X/y together with explicit original node_indices, so its weights divide by len(node_indices) and its parent entropy uses y[node_indices].
+
 ## 4. Read the Python helpers line by line
 
-This single block is self-contained. It intentionally handles **binary 0/1 features and targets**. It illustrates the lab-style function names without copying a graded solution or claiming to reproduce an unavailable notebook.
+This single block is self-contained and is a **safer reusable teaching implementation, not the original lab code**. It intentionally handles **binary 0/1 features and targets**. Unlike section 3a, compute_entropy accepts labels and guards empty arrays; split_dataset keeps original row IDs through explicit node_indices. A split with an empty child has zero gain. A tree builder should still reject empty children and stop when get_best_split returns -1.
 
 ```python
 import numpy as np
@@ -271,14 +414,15 @@ A small tree is useful when I need to inspect explicit rules. Deep trees become 
 4. Does predict fit new questions? No; it reuses learned rules.
 5. Why use X_new=[[...]]? sklearn expects a batch dimension even for one row.
 6. Is perfect training accuracy enough? No; assess unseen data with a suitable split.
-7. Where are the original lab numbers? Still pending the original notebook/chat excerpt; the four-row calculation above is explicitly illustrative.
+7. Where are the original lab numbers? Section 3a reproduces the supplied ten-row lab, its root gains and depth-2 leaves; section 3's four-row example remains illustrative.
 
 ## Sources and verification
 
+- Original ungraded Decision Trees lab excerpt: arrays, feature definitions, four functions and expected results supplied directly in the user's handoff; no complete notebook was retrieved.
 - [Course 2 — Advanced Learning Algorithms](https://www.coursera.org/learn/advanced-learning-algorithms): decision-tree topic and lab context.
 - [sklearn tree guide](https://scikit-learn.org/stable/modules/tree.html).
 - [DecisionTreeClassifier API](https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html).
 - [GridSearchCV API](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html).
 - [Cost-complexity pruning example](https://scikit-learn.org/stable/auto_examples/tree/plot_cost_complexity_pruning.html).
 
-**Verification, 19 October 2026:** examples reviewed against official sklearn documentation. Entropy/gain arithmetic and link consistency checked separately. Python/NumPy/sklearn execution is unavailable in this task environment, so the Python blocks have not been runtime-tested. The earlier sheet's verification record applies only to its earlier examples.
+**Verification, 19 October 2026:** ran all five Python blocks in this note offline, with the stated continuation dependencies, using Python 3.12.14, NumPy 2.5.2, scikit-learn 1.9.1 and Matplotlib 3.11.2. Assertions checked all three root splits and gains against an independent class-count entropy calculation, the depth-2 split choices and four pure leaves, node-local to original index mapping, the four-row illustrative result, and safer-helper empty-parent, empty-child, constant-feature and pure-node cases. The original empty-child call raised ZeroDivisionError as expected. The Iris GridSearchCV example and prediction/probability assertions passed; the plot continuation exported a PNG using the noninteractive Agg backend (GUI display was not tested). The canonical sheet's section 12a sklearn block also ran successfully. The complete course notebook and any course plotting/recursive-builder utilities were not supplied or executed; this verifies the handoff reproduction and examples here. Earlier verification records for other cheat-sheet sections remain unchanged.

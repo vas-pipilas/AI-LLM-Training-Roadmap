@@ -53,7 +53,7 @@ They should work both as a deeper refresher when I cannot watch a lecture and as
 - [Fit, Transform, and Predict — ELI5 Deep Dive](knowledge/FIT_TRANSFORM_PREDICT_DEEP_DIVE.md) — what each fit learns, scaler overwrite behavior, train-only preparation, polynomial features, shapes, model selection, and the prediction path from raw inputs.
 - [sklearn Preprocessing — Copy-Friendly Cheat Sheet](knowledge/SKLEARN_PREPROCESSING_CHEAT_SHEET.md) — runnable manual and Pipeline examples, CV degree selection, matching preprocessing/model objects, and binary classification evaluation.
 
-- [Decision Trees — Detailed Study Note](knowledge/DECISION_TREES.md) — illustrative entropy/information-gain calculations, lab-style Python helpers, sklearn usage, overfitting controls and telecom applications. Original notebook calculations await the source excerpt.
+- [Decision Trees — Detailed Study Note](knowledge/DECISION_TREES.md) — the supplied Andrew Ng ungraded lab reproduced with verified calculations, a separate illustrative example, safer Python helpers, sklearn usage, overfitting controls and telecom applications.
 
 This section should grow selectively. Not every lesson deserves a document; core concepts that later knowledge depends on do.
 

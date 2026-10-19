@@ -965,7 +965,7 @@ Ravel is appropriate here because each example has exactly one label/output; fla
 
 ## 12a. Decision trees — concise syntax
 
-For entropy calculations, lab-style helper functions, split selection, overfitting and a full CV example, see [Decision Trees — detailed study note](DECISION_TREES.md). Its illustrative calculations are explicitly distinguished from the original lab results, which still need the original notebook excerpt.
+For entropy calculations, lab-style helper functions, split selection, overfitting and a full CV example, see [Decision Trees — detailed study note](DECISION_TREES.md). It reproduces the supplied original ten-row Andrew Ng ungraded lab with verified calculations, separately from the illustrative example and safer reusable helpers.
 
 ```python
 from sklearn.datasets import load_iris
@@ -998,7 +998,7 @@ fit learns rules; predict follows them; predict_proba estimates class proportion
 
 The focused notes remain useful; this page adds one canonical syntax entry point rather than replacing them:
 
-- [Decision Trees](DECISION_TREES.md): worked illustrative entropy/gain, lab-style helpers, sklearn CV, overfitting and telecom applications; original notebook calculations pending.
+- [Decision Trees](DECISION_TREES.md): supplied original lab reproduction and verified entropy/gain, a separate illustrative example, safer helpers, sklearn CV, overfitting and telecom applications.
 - [Python for ML — Quick Reference](PYTHON_FOR_ML_QUICK_REFERENCE.md): original Python patterns, code-reading checklist, and detailed bias/variance and λ reminders (sections 20–21).
 - [NumPy for ML](NUMPY_FOR_ML.md): focused arrays, vectorization, shapes, weights, thresholding.
 - [TensorFlow/Keras for ML](TENSORFLOW_KERAS_FOR_ML.md): focused layer, training, and forward-pass explanations.
@@ -1027,3 +1027,5 @@ Official API references for checking details and extending examples:
 
 
 **Addition, 19 October 2026:** added section 12a and the dedicated Decision Trees link. Reviewed against official sklearn APIs; the new Python example was not runtime-tested in this task environment. The 18 October verification record above remains unchanged.
+
+**Lab verification update, 19 October 2026:** the linked Decision Trees note now reproduces the original ungraded lab excerpt supplied in the handoff. Section 12a's sklearn block was runtime-tested offline with Python 3.12.14 and scikit-learn 1.9.1; its shape assertions passed. The earlier verification records above describe the earlier runs and are preserved.
