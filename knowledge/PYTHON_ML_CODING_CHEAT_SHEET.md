@@ -24,6 +24,7 @@
 | Intermediate practice | [11. Bias, variance, and regularization](#11-bias-variance-and-regularization) | Diagnose errors, tune λ, learning curves |
 | Quick lookup | [12. Debugging and copy recipes](#12-debugging-and-copy-recipes) | Common mistakes and tiny reusable checks |
 | Beginner → intermediate | [12a. Decision trees](#12a-decision-trees--concise-syntax) | Fit/predict, probabilities, growth controls; deeper note linked |
+| Beginner → intermediate | [12b. Trees Ensemble lab](#12b-trees-ensemble-lab--pandas-forests-and-xgboost) | pandas encoding, tuning loops, random forest, XGBoost early stopping |
 | Reference | [13. Related notes and API sources](#13-related-notes-and-api-sources) | Deeper explanations and official docs |
 | Maintenance | [14. How this sheet grows](#14-how-this-sheet-grows) | Update policy and verification record |
 
@@ -994,6 +995,114 @@ one_label = tree.predict(X_test[:1])     # (1, 4) input -> (1,) output
 
 fit learns rules; predict follows them; predict_proba estimates class proportions in the reached leaf. Keep X two-dimensional and feature order unchanged. Standalone trees generally need no scaling. Smaller max_depth or larger min_samples_leaf restrict growth; ccp_alpha controls pruning. Select these with training/CV data before final test evaluation. sklearn's default criterion is Gini; entropy is specified here to connect to the study calculation. Original teaching example, not an exact course lab reproduction.
 
+## 12b. Trees Ensemble lab — pandas, forests, and XGBoost
+
+For the beginner walkthrough, full tuning loops, reported results and source corrections, see [the second lab in Decision Trees](DECISION_TREES.md#8a-second-lab-ungraded-lab---trees-ensemble). The earlier ten-animal lab and section 12a remain useful.
+
+**Setup:** install `pandas scikit-learn xgboost` and put the supplied lab's `heart.csv` in the working directory. This block is independent. Its expected shapes require that 918-row file, not an arbitrary heart dataset.
+
+```python
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+categorical = ["Sex", "ChestPainType", "RestingECG", "ExerciseAngina", "ST_Slope"]
+df = pd.read_csv("heart.csv")
+df = pd.get_dummies(df, columns=categorical, prefix=categorical)
+features = [name for name in df.columns if name != "HeartDisease"]
+X, y = df[features], df["HeartDisease"]
+X_train, X_val, y_train, y_val = train_test_split(
+    X, y, train_size=0.8, random_state=55,
+)
+assert X.shape == (918, 20) and y.shape == (918,)
+assert X_train.shape == (734, 20) and X_val.shape == (184, 20)
+
+tree = DecisionTreeClassifier(max_depth=4, min_samples_split=50, random_state=55)
+# A seed is deliberately added here for repeatable practice.
+# The source lab's final forest omits it, so exact source scores may vary.
+forest = RandomForestClassifier(
+    n_estimators=100, max_depth=16, min_samples_split=10,
+    max_features="sqrt", n_jobs=1, random_state=55,
+)
+for name, model in [("Tree", tree), ("Forest", forest)]:
+    model.fit(X_train, y_train)
+    print(
+        f"{name}: train={accuracy_score(y_train, model.predict(X_train)):.4f}, "
+        f"validation={accuracy_score(y_val, model.predict(X_val)):.4f}"
+    )
+```
+
+There are 11 original features: six numeric plus five categorical. Encoding all five (including binary Sex and ExerciseAngina) gives `6 + 2 + 4 + 3 + 2 + 3 = 20` inputs; the target is a separate 21st column. Use exact `!= "HeartDisease"` or `.drop(columns="HeartDisease")`; the lab's `name not in "HeartDisease"` tests substrings rather than exact equality.
+
+**Continue the setup block** to sweep one hyperparameter at a time:
+
+```python
+split_candidates = [2, 10, 30, 50, 100, 200, 300, 700]
+depth_candidates = [1, 2, 3, 4, 8, 16, 32, 64, None]
+for parameter, candidates in [
+    ("min_samples_split", split_candidates), ("max_depth", depth_candidates),
+]:
+    results = []
+    for value in candidates:
+        candidate = DecisionTreeClassifier(random_state=55, **{parameter: value})
+        candidate.fit(X_train, y_train)
+        results.append((
+            value, candidate.score(X_train, y_train), candidate.score(X_val, y_val),
+        ))
+    print(parameter, results)  # (candidate value, train accuracy, validation accuracy)
+```
+
+Each candidate is a new fit. Other settings stay at defaults; depth and split threshold are not jointly tuned. The detailed note runs the same sweeps for forests and tests `n_estimators=[10, 50, 100, 500]`. High train/low validation accuracy suggests overfitting; both low suggests underfitting (also inspect data/features). Reducing depth or increasing minimum split size restricts growth, but does not guarantee better validation accuracy. Similar scores are not proof of no overfitting.
+
+**Continue the setup block** for modern XGBoost early stopping:
+
+```python
+from xgboost import XGBClassifier
+
+n = int(len(X_train) * 0.8)  # 587 fit rows, 147 early-stopping rows
+xgb = XGBClassifier(
+    n_estimators=500, learning_rate=0.1, early_stopping_rounds=10,
+    eval_metric="logloss", random_state=55,
+)
+xgb.fit(
+    X_train.iloc[:n], y_train.iloc[:n],
+    eval_set=[(X_train.iloc[n:], y_train.iloc[n:])], verbose=False,
+)
+print(xgb.best_iteration, xgb.best_score)
+print(accuracy_score(y_train, xgb.predict(X_train)))
+print(accuracy_score(y_val, xgb.predict(X_val)))
+# sklearn wrapper defaults to the best iteration after early stopping.
+assert (
+    xgb.predict(X_val)
+    == xgb.predict(X_val, iteration_range=(0, xgb.best_iteration + 1))
+).all()
+```
+
+| Syntax / setting | Read it as |
+| --- | --- |
+| `pd.get_dummies(data, columns=..., prefix=...)` | Replace category columns with boolean/0–1 flags |
+| `X = df[features]; y = df["HeartDisease"]` | Inputs versus answer; exclude the target from inputs |
+| `train_size=.8, random_state=55` | Repeatable shuffled 734/184 lab split; no stratify in the source |
+| `model.fit(X_train, y_train)` | Learn from training rows; returns the fitted estimator |
+| `model.predict(X_val)` | Follow learned rules; returns class labels |
+| `accuracy_score(y_true, y_pred)` / `model.score(X, y)` | Fraction of correct class labels |
+| `max_depth` | Cap tree depth; None removes the explicit cap |
+| `min_samples_split` | Minimum samples to attempt a node split; not a minimum per child |
+| `RandomForestClassifier(n_estimators=100)` | 100 trees; default bootstrap samples rows with replacement |
+| `max_features="sqrt"` | Random candidate features at each split, about sqrt(feature count) |
+| `n_jobs=1` / `n_jobs=-1` | One worker / all processors for the forest; affects resources |
+| `XGBClassifier(n_estimators=500, learning_rate=.1)` | Up to 500 sequential gradient-boosting rounds, each contribution shrunk |
+| `early_stopping_rounds=10` | Constructor setting: stop after ten rounds without monitored improvement |
+| `eval_set=[(X_eval, y_eval)]` | Evaluation pairs passed to fit for monitoring |
+| `best_iteration` | Zero-indexed best round; use +1 for an exclusive iteration-range endpoint |
+| `GridSearchCV(..., param_grid=..., cv=...)` | Evaluate combinations over folds, unlike separate one-setting sweeps |
+
+**Source results (train / outer validation), not guarantees:** decision tree **.8665 / .8696**; unseeded final forest **.9346 / .8913**; XGBoost **.9251 / .8641**. The XGBoost log's best index **16** means 17 rounds, with best logloss **.43948**, correcting the source typo “4.3948.” Stopping after index **26** means 27 rounds were built. The sklearn wrapper's `predict`/`predict_proba` use the best round automatically, although the booster normally retains later rounds. The native booster needs an explicit iteration range to select the best prefix. The reported XGBoost train score includes the 147 monitoring rows, not just its 587 fit rows. See [XGBoost prediction behavior](https://xgboost.readthedocs.io/en/stable/prediction.html#early-stopping).
+
+Training learns rules; validation chooses settings; an untouched test set evaluates the frozen procedure. The lab's 184 rows are **validation**, even where its print label says “test.” Repeated model/hyperparameter selection can overfit them. GridSearchCV also needs a separate final test set. The detailed note provides a runnable `Pipeline + ColumnTransformer + OneHotEncoder(handle_unknown="ignore")` search: encoding is fitted only on each training fold, and unseen categories are handled consistently. This is stronger real-world practice than `get_dummies` before splitting; fixed-category encoding alone is **not proof of target leakage**. See [sklearn's leakage guidance](https://scikit-learn.org/stable/common_pitfalls.html#data-leakage).
+
 ## 13. Related notes and API sources
 
 The focused notes remain useful; this page adds one canonical syntax entry point rather than replacing them:
@@ -1017,6 +1126,8 @@ Official API references for checking details and extending examples:
 
 ## 14. How this sheet grows
 
+**Trees Ensemble verification, 19 October 2026:** syntax-checked all 11 Python blocks in this note and all 33 in the canonical sheet; checked balanced code fences and the new navigation/detail anchors. Re-ran the original five note blocks and section 12a with their embedded assertions. Using a synthetic 918-row table with the lab's schema (not the original CSV), executed the new pandas encoding and 734/184 split assertions, all 36 decision-tree/forest sweep fits, selected tree/forest fits, the curve with the Agg backend, and the six-combination, three-fold preprocessing pipeline grid. Verified an unseen category maps to an all-zero indicator block and can be predicted. Executed the sheet's new setup and both tuning loops on that fixture; checked the 587/147 inner split sizes. Parsed the uploaded log to confirm 27 rounds, best index 16 with logloss .43948, and final index 26. Environment: Python 3.12.14, NumPy 2.5.2, pandas 3.0.5, scikit-learn 1.9.1, Matplotlib 3.11.2. **The two new XGBoost blocks were syntax-checked and reviewed against official documentation, not executed:** XGBoost was unavailable and could not be installed from the available package index. The original heart.csv was not supplied, so none of the quoted lab accuracies were reproduced; they remain attributed source results. Interactive plot display was not tested. Earlier verification records describe their original runs.
+
 1. Add newly learned coding topics here when they become useful in actual labs/projects. Keep beginner refreshers separate from intermediate extensions.
 2. For each addition: show imports, data/setup or an explicit continuation dependency, expected shapes/output, and one common mistake. Prefer tiny generated data to unavailable course files.
 3. Add the navigation link. Link to deeper notes instead of overwriting them or creating another competing canonical sheet.
@@ -1029,3 +1140,4 @@ Official API references for checking details and extending examples:
 **Addition, 19 October 2026:** added section 12a and the dedicated Decision Trees link. Reviewed against official sklearn APIs; the new Python example was not runtime-tested in this task environment. The 18 October verification record above remains unchanged.
 
 **Lab verification update, 19 October 2026:** the linked Decision Trees note now reproduces the original ungraded lab excerpt supplied in the handoff. Section 12a's sklearn block was runtime-tested offline with Python 3.12.14 and scikit-learn 1.9.1; its shape assertions passed. The earlier verification records above describe the earlier runs and are preserved.
+

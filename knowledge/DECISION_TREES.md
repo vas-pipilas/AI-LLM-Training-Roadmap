@@ -2,7 +2,7 @@
 
 **Added: 19 October 2026.** A deeper companion to the [canonical Python ML coding cheat sheet](PYTHON_ML_CODING_CHEAT_SHEET.md). This is a study resource, not course completion.
 
-**Source boundary:** section 3a faithfully reproduces the original Andrew Ng ungraded Decision Trees lab excerpt supplied in the user's handoff, including its ten-row data and calculations. The four-row example is illustrative; section 4 provides separately labeled safer reusable helpers. The sklearn examples and practical explanations are independent teaching material.
+**Source boundary:** section 3a faithfully reproduces the original Andrew Ng ungraded Decision Trees lab excerpt supplied in the user's handoff, including its ten-row data and calculations. The four-row example is illustrative; section 4 provides separately labeled safer reusable helpers. Section 8a explains the second, uploaded Trees Ensemble lab; its reported results are transcribed and distinguished from modern runnable adaptations. Other sklearn examples and practical explanations are independent teaching material.
 
 ## 1. What a tree learns
 
@@ -391,6 +391,286 @@ For imbalanced incident labels, accuracy alone may reward always predicting the 
 
 Small changes to training rows can change a tree considerably. Random forests average diverse trees to reduce variance; boosting builds trees sequentially to improve the ensemble. Neither fixes leakage or bad labels.
 
+## 8a. Second lab: Ungraded Lab - Trees Ensemble
+
+**Added 19 October 2026.** This walkthrough uses the uploaded `Pasted text(6).txt`. Section 3a's ten-animal Andrew Ng lab stays separate: there I build split calculations by hand; here libraries build and compare whole models.
+
+### The story before the code
+
+Imagine a question game. One decision tree asks a chain of questions and guesses a label. A random forest asks many different trees and combines their answers. Gradient boosting builds a team in order: each new tree tries to improve the team's current predictions using the loss gradient. For classification, that is more precise than saying it simply fits raw label residuals.
+
+The worksheet is `heart.csv`, the **Heart Failure Prediction** dataset: **918 examples**, originally **11 input features** plus the binary target **HeartDisease** (`1` heart disease, `0` normal). The dataset's title is not the target's name; this is a heart-disease classification exercise.
+
+| Original feature | What it records |
+| --- | --- |
+| Age, Sex | Age in years and recorded sex category |
+| ChestPainType | Chest-pain category: TA, ATA, NAP, ASY |
+| RestingBP, Cholesterol | Resting blood pressure and serum cholesterol |
+| FastingBS | Already numeric binary indicator for fasting blood sugar above 120 mg/dl |
+| RestingECG | Normal, ST, or LVH category |
+| MaxHR, ExerciseAngina | Maximum heart rate and exercise-induced angina category |
+| Oldpeak, ST_Slope | ST depression value and slope category (Up, Flat, Down) |
+
+### Encoding and choosing X and y
+
+One-hot encoding makes a yes/no column for each category: `Sex_M=True` means “this row has category M.” These columns do not imply a numeric ordering between categories. The lab encodes all five named categorical columns, **including the two-category Sex and ExerciseAngina**. Its prose about removing binary variables does not match the actual code.
+
+Run this setup once; all code blocks in this section marked **Continue** depend on it. Install `numpy pandas matplotlib scikit-learn xgboost` in your active Python environment and place the lab's `heart.csv` in the working directory. The CSV is an external input, not bundled with these notes.
+
+```python
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+
+RANDOM_STATE = 55
+cat_variables = [
+    "Sex", "ChestPainType", "RestingECG", "ExerciseAngina", "ST_Slope",
+]
+raw = pd.read_csv("heart.csv")
+df = pd.get_dummies(
+    data=raw, prefix=cat_variables, columns=cat_variables,
+)
+features = [column for column in df.columns if column != "HeartDisease"]
+X = df[features]
+y = df["HeartDisease"]
+X_train, X_val, y_train, y_val = train_test_split(
+    X, y, train_size=0.8, random_state=RANDOM_STATE,
+)
+assert raw.shape == (918, 12)
+assert X.shape == (918, 20) and y.shape == (918,)
+assert "HeartDisease" not in X.columns
+assert X_train.shape == (734, 20) and X_val.shape == (184, 20)
+print(X_train.shape, X_val.shape)  # (734, 20) (184, 20)
+```
+
+`pd.get_dummies` replaces the five columns with 14 indicators: `2 + 4 + 3 + 2 + 3`. Six existing numeric features remain, giving **20 features** and **21 total columns including the target**. Depending on pandas/version/options, indicators may display as booleans or 0/1; both represent the same flags. `prefix` names each indicator's origin; `columns` chooses which inputs to encode. No `drop_first` is used.
+
+The list comprehension reads “keep each column except HeartDisease.” The source uses `x not in 'HeartDisease'`, a **substring membership** test on a string. It happens to work for these names, but `column != "HeartDisease"` expresses exact exclusion. `raw.drop(columns="HeartDisease")` is another clear way to separate inputs. This is **target exclusion**, not a search for the most predictive subset of features. Including the answer as an input would leak the target.
+
+### Training, validation, and test are different jobs
+
+- **Training:** examples used by `fit` to learn split rules.
+- **Validation:** examples used to choose hyperparameters or stopping time. Calling `predict` alone does not fit them, but choosing settings from their scores uses their information.
+- **Test:** an untouched final exam used only after the entire selection procedure is fixed.
+
+The lab uses `train_test_split(train_size=.8, random_state=55)`: 734 training rows and 184 validation rows, shuffled by default, **without stratification**. The function's name does not decide the role of its outputs. The lab sometimes labels validation scores “test”; because these rows help choose settings and compare models, they are validation, with **no separate untouched test set**. Adding `stratify=y` is often useful for classification but changes the lab split.
+
+### Read the comparison loops without getting lost
+
+A hyperparameter is a setting I choose before fitting; the tree's learned questions are model parameters. Each iteration below creates a **fresh estimator**, fits training rows, predicts both sets, computes accuracy (fraction correct), and stores the pair. `fit` returns the estimator, so `Model(...).fit(...)` can be chained. `.score(X, y)` for these sklearn classifiers also gives accuracy; explicit `accuracy_score(y_true, y_pred)` makes the calculation visible.
+
+**Continue setup.** This reproduces the lab's separate sweeps, including the forest's estimator-count experiment. Printing a table avoids needing the course's plotting style file.
+
+```python
+def compare_setting(estimator_class, parameter, values):
+    rows = []
+    for value in values:
+        model = estimator_class(
+            random_state=RANDOM_STATE, **{parameter: value},
+        ).fit(X_train, y_train)
+        train_accuracy = accuracy_score(y_train, model.predict(X_train))
+        val_accuracy = accuracy_score(y_val, model.predict(X_val))
+        rows.append((value, train_accuracy, val_accuracy))
+    return pd.DataFrame(rows, columns=[parameter, "train_accuracy", "val_accuracy"])
+
+split_values = [2, 10, 30, 50, 100, 200, 300, 700]
+depth_values = [1, 2, 3, 4, 8, 16, 32, 64, None]
+tree_split_scores = compare_setting(
+    DecisionTreeClassifier, "min_samples_split", split_values,
+)
+tree_depth_scores = compare_setting(
+    DecisionTreeClassifier, "max_depth", depth_values,
+)
+forest_split_scores = compare_setting(
+    RandomForestClassifier, "min_samples_split", split_values,
+)
+forest_depth_scores = compare_setting(
+    RandomForestClassifier, "max_depth", [2, 4, 8, 16, 32, 64, None],
+)
+forest_size_scores = compare_setting(
+    RandomForestClassifier, "n_estimators", [10, 50, 100, 500],
+)
+print(tree_split_scores.to_string(index=False))
+print(tree_depth_scores.to_string(index=False))
+print(forest_split_scores.to_string(index=False))
+print(forest_depth_scores.to_string(index=False))
+print(forest_size_scores.to_string(index=False))
+```
+
+`**{parameter: value}` turns a dictionary into a named argument, for example `min_samples_split=50`. `.append` adds one result; it does not train the model. Each sweep changes **one setting while others stay at defaults**: the depth sweep does not carry forward the split threshold selected earlier. Combining selected values afterward is not guaranteed to be the best pair.
+
+**Continue setup and the sweep block** for a curve like the lab's:
+
+```python
+import matplotlib.pyplot as plt
+
+positions = range(len(depth_values))
+plt.plot(positions, tree_depth_scores["train_accuracy"], label="Train")
+plt.plot(positions, tree_depth_scores["val_accuracy"], label="Validation")
+plt.xticks(list(positions), [str(value) for value in depth_values])
+plt.xlabel("max_depth")
+plt.ylabel("Accuracy")
+plt.legend()
+plt.tight_layout()
+plt.show()
+```
+
+The x positions are evenly spaced candidate indices, not literal numeric depths; `None` means no explicit depth cap. Read each train/validation pair together:
+
+| Pattern | Interpretation | Possible adjustment |
+| --- | --- | --- |
+| High train score, weaker validation score | Possible overfitting: memorizing training quirks | Reduce depth or increase minimum split size |
+| Both scores weak | Possible underfitting: too few useful questions | Allow more complexity; also inspect features/data |
+| Similar, useful scores | Smaller observed generalization gap | Check stability on more splits; not proof of no overfitting |
+
+An integer `min_samples_split=50` permits a split only when a node has at least 50 samples; it **does not require 50 samples in each child** (`min_samples_leaf` controls child support). A float such as `0.1` is a fraction of training samples, not the number 10 percent written as `10`. Shallower `max_depth` limits successive questions. Neither tuning direction guarantees better validation accuracy. The lab finds depth 4 useful; extremely shallow trees underfit. Its sweep alone does not establish a universal threshold such as “depth >= 5 always overfits.”
+
+### Selected decision tree and random forest
+
+**Continue setup.**
+
+```python
+decision_tree_model = DecisionTreeClassifier(
+    max_depth=4, min_samples_split=50, random_state=RANDOM_STATE,
+).fit(X_train, y_train)
+
+# Faithful final lab configuration: random_state was omitted here.
+random_forest_model = RandomForestClassifier(
+    n_estimators=100, max_depth=16, min_samples_split=10,
+).fit(X_train, y_train)
+
+for name, model in [
+    ("Decision tree", decision_tree_model),
+    ("Random forest", random_forest_model),
+]:
+    print(
+        f"{name}: train={accuracy_score(y_train, model.predict(X_train)):.4f}, "
+        f"validation={accuracy_score(y_val, model.predict(X_val)):.4f}"
+    )
+# For a repeatable forest experiment, construct a new forest with
+# random_state=RANDOM_STATE as well. Its score may differ from the source.
+```
+
+In a standard random forest (`bootstrap=True`), each tree gets a **bootstrap sample of rows, drawn with replacement**: some rows repeat and some are absent. At **each split**, a random subset of candidate features is considered; it is not one fixed feature subset assigned to the entire tree. sklearn classification combines the trees' class probabilities and chooses the class with the highest average probability (a useful refinement of the “trees vote” analogy). See the [official forest API](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html).
+
+| Forest setting | Meaning |
+| --- | --- |
+| n_estimators | Number of trees; more trees cost time/memory and often stabilize the average |
+| max_features | Candidate features considered per split; default "sqrt" gives about sqrt(20), normally 4 here; search may inspect more to find a valid split |
+| n_jobs | Parallel workers; None normally means 1, -1 uses all processors; a resource setting, not a regularizer |
+| max_depth | Depth limit for each tree |
+| min_samples_split | Minimum node sample count/fraction needed to attempt a split |
+| random_state | Seed for bootstrap/feature randomness; the lab seeds sweeps but omits it in its final forest |
+
+The individual forest trees can be deeper than the selected single tree because averaging diverse trees reduces variance; it does not make overfitting impossible. The source's estimator candidates are `[10, 50, 100, 500]`, even though its nearby prose mentions only three values.
+
+### XGBoost: improve a team one round at a time
+
+Gradient boosting adds trees **sequentially**, each guided by the current loss's gradients (XGBoost also uses second-order information). `learning_rate=.1` shrinks each new tree's contribution; `n_estimators=500` is the maximum number of boosting rounds here, not a promise to use all 500. The lab's binary, one-tree-per-round setup makes rounds and tree counts align.
+
+The lab further divides the 734 training rows by position: `n = int(734 * .8) = 587` fit rows and **147 early-stopping evaluation rows**. It uses the first 587 and remaining 147 of an already shuffled training split; `.iloc` below makes positional slicing explicit. The outer 184 validation rows remain separate for model comparison.
+
+**Continue setup.** In modern XGBoost, put `early_stopping_rounds` in the **constructor**, rather than `fit`. Use an explicit loss metric:
+
+```python
+from xgboost import XGBClassifier
+
+n = int(len(X_train) * 0.8)
+X_train_fit, X_train_eval = X_train.iloc[:n], X_train.iloc[n:]
+y_train_fit, y_train_eval = y_train.iloc[:n], y_train.iloc[n:]
+assert len(X_train_fit) == 587 and len(X_train_eval) == 147
+
+xgb_model = XGBClassifier(
+    n_estimators=500, learning_rate=0.1,
+    early_stopping_rounds=10, eval_metric="logloss",
+    random_state=RANDOM_STATE,
+)
+xgb_model.fit(
+    X_train_fit, y_train_fit,
+    eval_set=[(X_train_eval, y_train_eval)], verbose=False,
+)
+print("Best round index:", xgb_model.best_iteration)
+print("Best evaluation logloss:", xgb_model.best_score)
+print("Rounds stored:", xgb_model.get_booster().num_boosted_rounds())
+print("Train:", accuracy_score(y_train, xgb_model.predict(X_train)))
+print("Validation:", accuracy_score(y_val, xgb_model.predict(X_val)))
+
+# Default sklearn-wrapper prediction uses the best round automatically.
+best_predictions = xgb_model.predict(
+    X_val, iteration_range=(0, xgb_model.best_iteration + 1),
+)
+assert (best_predictions == xgb_model.predict(X_val)).all()
+```
+
+`eval_set` is a list of `(X, y)` pairs monitored after each round. These rows do not supply the training gradients, but their loss chooses the stopping point. With multiple evaluation sets/metrics, the last set/metric controls early stopping by default. Log loss measures probability quality and penalizes confident wrong predictions; **lower is better**, unlike accuracy.
+
+In the **supplied output**, `best_iteration=16` is zero-indexed: it means the **17th round**, with log loss **0.43948**. The source sentence “4.3948” is a typo. Rounds 17 through 26 give ten successive rounds without an improvement, so training stops after index **26**: **27 rounds were built**, not 26. Changing patience can change the run; its stopping index is not universally fixed.
+
+The fitted booster normally retains trees through the stopping round. Nevertheless, `XGBClassifier.predict` and `predict_proba` automatically use rounds through `best_iteration` after early stopping. For this output, that means rounds 0–16 (`iteration_range=(0, 17)`, end excluded), not all 27 stored rounds. Native `Booster.predict` has different defaults; specify its iteration range explicitly when using the booster directly. See [XGBoost's prediction guide](https://xgboost.readthedocs.io/en/stable/prediction.html#early-stopping) and [sklearn API reference](https://xgboost.readthedocs.io/en/stable/python/python_api.html#xgboost.XGBClassifier). Constructor placement and this default prediction behavior follow the documented API; library versions/defaults can change exact scores.
+
+### What the reported numbers say
+
+These are **transcribed lab results, not newly reproduced benchmarks**:
+
+| Selected model | Settings | Train accuracy | Outer validation accuracy |
+| --- | --- | --- | --- |
+| Decision tree | max_depth=4, min_samples_split=50, seed=55 | .8665 | .8696 |
+| Random forest | n_estimators=100, max_depth=16, min_samples_split=10; final model unseeded | .9346 | .8913 |
+| XGBoost | up to 500 rounds, learning_rate=.1, patience=10; best index 16 | .9251 | .8641 |
+
+For XGBoost, the displayed “train” score covers **all 734 outer training rows**, including the 147 rows used for early stopping; it is not a pure fit-only score. A validation score slightly above training accuracy can happen with sampling variation; it is not a bug or proof of perfect generalization. The forest leads on this particular validation split, which is too little evidence for a universal winner. Accuracy alone also hides which class is missed.
+
+### From lab sweeps to GridSearchCV and stronger preprocessing
+
+One-parameter sweeps teach how a setting behaves. **GridSearchCV** tries combinations (for example, each candidate depth with each split threshold), fits each combination across training folds, and ranks mean validation scores. It can reveal interactions missed by separate default-based sweeps, at a higher compute cost. `best_score_` is a model-selection score, not final test performance. See the existing section 7 Iris example and the [sklearn tuning guide](https://scikit-learn.org/stable/modules/grid_search.html).
+
+Repeatedly selecting hyperparameters, algorithms or stopping times on validation results can overfit those results. Reserve an untouched test set **before** this work, or use an appropriate nested evaluation procedure. The following independent real-world example changes the lab protocol: it reserves 20% for final testing and uses three-fold CV within the remaining data. It does not reproduce the lab's 734/184 split.
+
+```python
+import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split, StratifiedKFold, GridSearchCV
+
+raw = pd.read_csv("heart.csv")
+categorical = [
+    "Sex", "ChestPainType", "RestingECG", "ExerciseAngina", "ST_Slope",
+]
+X_raw = raw.drop(columns="HeartDisease")
+y_raw = raw["HeartDisease"]
+X_dev, X_test, y_dev, y_test = train_test_split(
+    X_raw, y_raw, test_size=0.2, stratify=y_raw, random_state=55,
+)
+preprocess = ColumnTransformer(
+    [("categories", OneHotEncoder(handle_unknown="ignore"), categorical)],
+    remainder="passthrough",
+)
+pipeline = Pipeline([
+    ("preprocess", preprocess),
+    ("tree", DecisionTreeClassifier(random_state=55)),
+])
+search = GridSearchCV(
+    pipeline,
+    {"tree__max_depth": [3, 4, 8],
+     "tree__min_samples_split": [10, 50]},
+    cv=StratifiedKFold(n_splits=3, shuffle=True, random_state=55),
+    scoring="accuracy", refit=True,
+)
+search.fit(X_dev, y_dev)
+print("Selected settings:", search.best_params_)
+print("Mean CV accuracy:", search.best_score_)
+# Freeze the procedure before this final evaluation; do not retune from it.
+print("Final test accuracy:", search.score(X_test, y_test))
+```
+
+Inside each CV fold, the pipeline fits the encoder and tree on that fold's training rows only. Final refitting uses all development rows. `handle_unknown="ignore"` maps an unseen category to all zeros for that input's indicator block, avoiding an error. The `tree__` prefix routes each search setting to the pipeline step named `tree`.
+
+This is stronger real-world practice than applying `pd.get_dummies` to the full table before splitting: it keeps the learned category vocabulary, column alignment and any future imputation/scaling inside training boundaries. **Fixed-category one-hot encoding alone does not prove target leakage**: it does not learn label relationships or numeric distribution statistics. The concern here is using held-out data to discover a vocabulary and maintaining preprocessing discipline, not claiming the lab's score is demonstrably inflated. Never fit an imputer/scaler or target-based encoder on held-out rows. See [pandas get_dummies](https://pandas.pydata.org/docs/reference/api/pandas.get_dummies.html), [OneHotEncoder](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.OneHotEncoder.html), and [sklearn leakage guidance](https://scikit-learn.org/stable/common_pitfalls.html#data-leakage).
+
 ## 9. Real applications and practical limits
 
 These are possible projects, not claims about deployed models:
@@ -418,6 +698,11 @@ A small tree is useful when I need to inspect explicit rules. Deep trees become 
 
 ## Sources and verification
 
+- Uploaded **Ungraded Lab - Trees Ensemble**, `Pasted text(6).txt`: second-lab code, printed scores and early-stopping log, explained in section 8a. No dataset CSV accompanied the text.
+- [RandomForestClassifier API](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html), [pandas get_dummies](https://pandas.pydata.org/docs/reference/api/pandas.get_dummies.html), [XGBoost sklearn API](https://xgboost.readthedocs.io/en/stable/python/python_api.html#xgboost.XGBClassifier), and [prediction behavior](https://xgboost.readthedocs.io/en/stable/prediction.html#early-stopping): current-library corrections and adaptations.
+
+**Trees Ensemble verification, 19 October 2026:** syntax-checked all 11 Python blocks in this note and all 33 in the canonical sheet; checked balanced code fences and the new navigation/detail anchors. Re-ran the original five note blocks and section 12a with their embedded assertions. Using a synthetic 918-row table with the lab's schema (not the original CSV), executed the new pandas encoding and 734/184 split assertions, all 36 decision-tree/forest sweep fits, selected tree/forest fits, the curve with the Agg backend, and the six-combination, three-fold preprocessing pipeline grid. Verified an unseen category maps to an all-zero indicator block and can be predicted. Executed the sheet's new setup and both tuning loops on that fixture; checked the 587/147 inner split sizes. Parsed the uploaded log to confirm 27 rounds, best index 16 with logloss .43948, and final index 26. Environment: Python 3.12.14, NumPy 2.5.2, pandas 3.0.5, scikit-learn 1.9.1, Matplotlib 3.11.2. **The two new XGBoost blocks were syntax-checked and reviewed against official documentation, not executed:** XGBoost was unavailable and could not be installed from the available package index. The original heart.csv was not supplied, so none of the quoted lab accuracies were reproduced; they remain attributed source results. Interactive plot display was not tested. Earlier verification records describe their original runs.
+
 - Original ungraded Decision Trees lab excerpt: arrays, feature definitions, four functions and expected results supplied directly in the user's handoff; no complete notebook was retrieved.
 - [Course 2 — Advanced Learning Algorithms](https://www.coursera.org/learn/advanced-learning-algorithms): decision-tree topic and lab context.
 - [sklearn tree guide](https://scikit-learn.org/stable/modules/tree.html).
@@ -426,3 +711,4 @@ A small tree is useful when I need to inspect explicit rules. Deep trees become 
 - [Cost-complexity pruning example](https://scikit-learn.org/stable/auto_examples/tree/plot_cost_complexity_pruning.html).
 
 **Verification, 19 October 2026:** ran all five Python blocks in this note offline, with the stated continuation dependencies, using Python 3.12.14, NumPy 2.5.2, scikit-learn 1.9.1 and Matplotlib 3.11.2. Assertions checked all three root splits and gains against an independent class-count entropy calculation, the depth-2 split choices and four pure leaves, node-local to original index mapping, the four-row illustrative result, and safer-helper empty-parent, empty-child, constant-feature and pure-node cases. The original empty-child call raised ZeroDivisionError as expected. The Iris GridSearchCV example and prediction/probability assertions passed; the plot continuation exported a PNG using the noninteractive Agg backend (GUI display was not tested). The canonical sheet's section 12a sklearn block also ran successfully. The complete course notebook and any course plotting/recursive-builder utilities were not supplied or executed; this verifies the handoff reproduction and examples here. Earlier verification records for other cheat-sheet sections remain unchanged.
+
