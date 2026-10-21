@@ -273,11 +273,15 @@ The helpers use their arguments, not global names such as X_train. Otherwise the
 
 This section explains the graded Andrew Ng decision-tree exercises discussed in chat, including `split_dataset` (UNQ_C2). The tiny mushroom data below are an **invented teaching example**, not a reproduction of the course dataset or a claim that the full graded notebook was executed. The earlier ungraded animal lab in section 3a stays separate.
 
+### What confused me in the graded lab / brain-burner troubleshooting
+
+Read this as a debugging route: **labels → entropy → split row IDs → weighted information gain → best feature → repeat on a child**. The indexing walkthrough and first-attempt table below cover the earlier mistakes; the later gain-selection walkthrough covers the follow-up attempts. The current request supplies the broader list of misunderstandings; the retrieved chat directly shows `ig_1 > best_feature`, the question about keeping the previous gain, and the attempt that selected a feature without updating `ig_max`.
+
 ### Picture a teacher sorting schoolchildren
 
 Imagine a teacher with one big class register. Each child has a permanent register number. The teacher asks, “Are you wearing a hat?” Children answering yes go left; children answering no go right. Then the teacher asks only the children on the right another question. Their register numbers stay the same: children 2 and 5 do not become children 0 and 1.
 
-For the mushroom exercise, replace children with mushrooms and the register with `X`. Each feature column answers one yes/no question about a mushroom. A separate answer sheet, `y`, says **1 = edible, 0 = poisonous**. Those label meanings belong to this exercise; they are not a universal encoding. A feature value of 1 means “yes to this feature,” not “edible.”
+For the mushroom exercise, replace children with mushrooms and the register with `X`. Each feature column answers one yes/no question about a mushroom. A separate answer sheet, `y`, says **1 = edible, 0 = poisonous**. Those label meanings belong to this exercise; they are not a universal encoding. A feature value of 1 means “yes to this feature,” not “edible.” **`y = 1` is the positive-class label, not a statement that a prediction was correct.** For example, `y_true = 1` and `y_pred = 0` is an incorrect prediction of a positive example. Correctness requires comparing a prediction with its label; entropy needs no predictions.
 
 | Name or expression | What it means |
 | --- | --- |
@@ -302,6 +306,8 @@ At the current node, first select its labels: `y_node = y[node_indices]`. Then:
 p_1 = number of labels equal to 1 / number of labels at this node
 H = -p_1 * log2(p_1) - (1 - p_1) * log2(1 - p_1)
 ```
+
+For binary labels, `p_1 = sum(y_node) / len(y_node)` (or NumPy's `np.sum`) is the class-1 fraction. Inside `compute_entropy(y)`, the argument is already the selected labels, so this becomes `p_1 = sum(y) / len(y)`.
 
 With binary 0/1 labels, `np.sum(y_node)` counts the edible mushrooms. `p_1 = 0` means all poisonous; `p_1 = 1` means all edible. Both nodes are **pure**, so entropy is 0. Half edible and half poisonous gives maximum binary entropy, 1 bit. Entropy describes how mixed the answers are; it does not tell us which feature to choose by itself.
 
@@ -456,6 +462,139 @@ For the right child, the parent labels are `[0, 1, 0]`, so `p_1 = 1/3` and paren
 | Compute `log2(p_1)` before checking endpoints | Pure nodes can produce warnings/infinite or NaN terms. | Return 0 for `p_1 == 0` or `p_1 == 1` first |
 
 A quick check before coding: **Which rows are here? Which column am I asking about? Am I returning the mushrooms' IDs or their answers?** Then evaluate the split separately using the labels.
+
+### Why the child weights are not p_1
+
+The parent is the **current node**, even when it is a child of an earlier node. Its entropy is `compute_entropy(y[node_indices])`; child entropies use `y[left_indices]` and `y[right_indices]`. Only at the root do all labels belong to the current parent.
+
+| Quantity | Numerator / denominator | Question it answers |
+| --- | --- | --- |
+| Parent `p_1` | Positive labels at this node / samples at this node | How mixed are this node's classes? |
+| Left child's `p_1` | Positive labels in left child / samples in left child | How mixed are the left labels? |
+| `w_left` | `len(left_indices) / len(node_indices)` | What fraction of the current samples went left? |
+| `w_right` | `len(right_indices) / len(node_indices)` | What fraction went right? |
+
+For a nonempty node and valid binary routing, `w_left + w_right = 1`. A child weight can be zero; that child's `p_1` is undefined when empty, which is why the entropy helper guards it.
+
+```text
+IG = H(current parent) - [w_left * H(left labels) + w_right * H(right labels)]
+```
+
+The earlier three-row node has `p_1 = 1/3` and `w_left = 2/3`: they measure different things. Both child entropies happen to be zero there, so weights do not change that particular result.
+
+To see why weighting matters, imagine a separate ten-row current node with five positives and five negatives. A candidate feature routes nine rows left (five positives, four negatives) and one negative right:
+
+```text
+parent: p_1 = 5/10, H = 1
+left:   p_1 = 5/9,  H ≈ 0.991076, w_left = 9/10
+right:  p_1 = 0/1,  H = 0,        w_right = 1/10
+weighted child entropy ≈ 0.9 * 0.991076 + 0.1 * 0 = 0.891968
+information gain ≈ 1 - 0.891968 = 0.108032 bits
+```
+
+An unweighted average would report `(0.991076 + 0) / 2 ≈ 0.495538` and gain `0.504462`. That gives the single pure row as much influence as the nine-row mixed group and exaggerates the improvement. We want average remaining uncertainty **per sample**, so branch sizes matter. Using the full dataset size in a deeper node's denominator would also give the wrong weights.
+
+### Best feature: keep the best score so far, not just the previous score
+
+`split_dataset` routes rows for **one specified feature**. `compute_information_gain` evaluates that candidate using labels. `get_best_split` tries the feature columns and remembers which candidate achieved the largest positive gain. It does not build the complete recursive tree.
+
+In the six-row example, `X.shape == (6, 2)`: try features `0, 1` with `range(X.shape[1])`, not six sample positions with `range(len(y))`. Rows are the examples used to evaluate a question; columns are the candidate questions.
+
+Continue the two section 4a runnable blocks above. This uses the same helper behavior as section 4, with the variable names from the student's attempt:
+
+```python
+def get_best_split(X, y, node_indices):
+    num_features = X.shape[1]
+    best_feature = -1
+    ig_max = 0.0
+    for i in range(num_features):  # i is a FEATURE index in this loop
+        ig_i = compute_information_gain(X, y, node_indices, i)
+        if ig_i > ig_max:
+            best_feature = i
+            ig_max = ig_i
+    return best_feature
+
+gains = [
+    compute_information_gain(X, y, root_indices, feature)
+    for feature in range(X.shape[1])
+]
+print("Root gains:", [round(gain, 6) for gain in gains])
+print("Best root feature:", get_best_split(X, y, root_indices))
+print("Best right-child feature:", get_best_split(X, y, right))
+assert np.allclose(gains, [0.08170416594551044, 0.4591479170272448])
+assert get_best_split(X, y, root_indices) == 1
+assert get_best_split(X, y, right) == 1
+assert get_best_split(X, y, [2, 5]) == -1  # already pure
+assert get_best_split(X, y, []) == -1
+assert get_best_split(np.zeros_like(X), y, root_indices) == -1
+
+# Separate weight example above; no change to the six-row X/y.
+left_labels = np.array([1] * 5 + [0] * 4)
+right_labels = np.array([0])
+weighted = 0.9 * compute_entropy(left_labels) + 0.1 * compute_entropy(right_labels)
+assert np.isclose(weighted, 0.8919684538544)
+assert np.isclose(1 - weighted, 0.1080315461456)
+```
+
+Expected output:
+
+```text
+Root gains: [0.081704, 0.459148]
+Best root feature: 1
+Best right-child feature: 1
+```
+
+`ig_i` stores the returned score for **this candidate**. `ig_max` stores the **largest score seen so far**. `best_feature` stores the **column ID that earned that score**. A score and a column ID have different meanings, even though both are Python numbers. The `i` in this feature loop has a different role from the row ID `i` inside `split_dataset`; variable names alone do not determine their meaning.
+
+For candidate gains `[0.4, 0.1, 0.2]`, the running maximum stays `[0.4, 0.4, 0.4]` and feature 0 wins. Comparing only with the previous gain would let 0.2 beat 0.1 and wrongly replace the earlier 0.4 winner.
+
+| Error from the attempts | Correct pattern / reason |
+| --- | --- |
+| Call `compute_information_gain(...)` without saving its return | `ig_i = compute_information_gain(...)` makes the score available for comparison |
+| `if ig_1 > best_feature:` | Use `if ig_i > ig_max:`; compare gain with gain, and use letter `i`, not digit `1` |
+| Update only `best_feature = i` | Also set `ig_max = ig_i`; otherwise every later positive gain beats the unchanged zero |
+| Keep only the previous `ig_i` | Keep the maximum of **all** candidates seen so far |
+| Loop over `len(y)` | Loop over `X.shape[1]`; labels count samples, not feature columns |
+| Use `p1` after defining `p_1`, or `ig_1` after defining `ig_i` | Python treats each spelling as a separate name; stale notebook variables can hide the error |
+
+These are wrong/correct patterns, not extra cells to run. The student's final addition of `ig_max = ig_i` fixes the missing running-maximum update.
+
+Starting with `best_feature = -1` and `ig_max = 0.0` means **no strictly positive gain → return -1**. Check that sentinel before using it as an array index: Python otherwise treats `-1` as the last column. With strict `>`, equal positive gains keep the first feature. A zero-gain result means this greedy rule stops here; it does not prove that the data have no useful feature interactions (XOR is a classic counterexample).
+
+### Keep trees separate from the neural-network mental model
+
+| Idea | This binary decision-tree lab | Standard neural-network training |
+| --- | --- | --- |
+| How an input is processed | Ask a discrete feature question and follow one branch | Compute weighted sums plus biases, then activations across layers |
+| What training chooses | Feature questions and recursive partitions, greedily using gain here | Numerical weights/biases, usually using gradients from backpropagation |
+| What a “weight” means here | `w_left/right` are sample proportions calculated from branch sizes | Learned connection parameters in expressions such as `W @ x + b` |
+| Role of labels | Count classes to evaluate each split; leaves predict classes | Compare outputs with targets through a loss |
+| Prediction after training | Follow stored questions to a leaf | Run a forward pass with learned parameters |
+
+Entropy here measures the mixture of labels in a node; it is not the NN's per-example prediction loss or a backpropagation step. Binary cross-entropy loss and binary entropy have related logarithms, but their inputs and jobs differ. Both models use labeled examples, and both need evaluation on unseen data. This comparison concerns the ordinary single-tree lab; boosted-tree methods elsewhere in this note do use loss gradients.
+
+### Brain-burner self-check and quick reference
+
+Try answering before reading the answer after the dash:
+
+1. With `node_indices = [2, 3, 5]`, what does `range(len(node_indices))` give? — Positions `[0, 1, 2]`; actual original IDs are `2, 3, 5`.
+2. Why store `i` when `X[i, feature] == 1`? — The value answers the question; the ID lets us retrieve that sample's features and label later.
+3. If `y[5] == 1`, was row 5 predicted correctly? — Unknown until we compare a prediction with that label.
+4. At the three-row node, which labels supply parent entropy? — `y[[2, 3, 5]]`, not all six labels.
+5. Nine of ten samples go left and five of those nine are positive: what are `w_left` and left `p_1`? — `9/10` and `5/9`.
+6. Gains arrive as `0.4, 0.1, 0.2`: what must remain stored? — Gain `0.4` and feature ID `0`.
+7. Why update two variables in the `if`? — One remembers the best score; the other remembers where it came from.
+8. All candidates have zero gain: what next? — Return `-1`; the builder stops instead of indexing column `-1`.
+
+| Job | Quick pattern |
+| --- | --- |
+| Select current labels | `y_node = y[node_indices]` |
+| Measure class mixture | Empty guard → `p_1 = sum(y_node)/len(y_node)` → endpoint guard → entropy |
+| Route a sample | `for i in node_indices` → inspect `X[i, feature]` → append `i` |
+| Score one question | Current-parent entropy minus child entropies weighted by `len(child)/len(node_indices)` |
+| Choose a question | Loop over columns → save returned gain → compare with maximum → update score and feature together |
+| Grow the tree | Check stopping rules → choose feature → route current IDs → repeat on children |
+| Predict | Follow the already stored questions; do not recompute the best feature |
 
 ## 5. Building a whole tree
 
@@ -887,6 +1026,8 @@ A small tree is useful when I need to inspect explicit rules. Deep trees become 
 7. Where are the original lab numbers? Section 3a reproduces the supplied ten-row lab, its root gains and depth-2 leaves; section 3's four-row example remains illustrative.
 
 ## Sources and verification
+
+**Brain-burner follow-up verification, 21 October 2026:** ran all three section 4a Python blocks in sequence with exact expected-output comparisons and embedded assertions, including the new best-feature loop and uneven-child weight calculation. Checked running-maximum selection on controlled gain sequences, zero gain, equal-gain ties, iteration over feature count, pure/empty nodes, constant features and the XOR stopping limitation. Re-ran section 4's helper example and the sheet's indexing reminder with NumPy floating-point errors set to raise. Syntax-checked all 14 Python blocks in this note and 34 in the canonical sheet. All relative links/anchors in the note, sheet and updated learning log passed; prior text was preserved. Python 3.12.14, NumPy 2.3.5. Other existing examples received syntax checks only in this follow-up; the complete course notebook and grader were not run. Earlier records below retain their original scope.
 
 - Graded-exercise context: the supplied chat excerpt includes UNQ_C2's split_dataset and the current request supplies the label meanings and first-attempt mistakes. Section 4a's six-row mushroom data are invented to demonstrate those concepts; the complete graded notebook and course grader were not retrieved or executed.
 

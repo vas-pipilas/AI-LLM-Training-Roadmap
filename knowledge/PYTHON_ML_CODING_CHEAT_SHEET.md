@@ -1004,6 +1004,12 @@ The [beginner walkthrough in Decision Trees, section 4a](DECISION_TREES.md#4a-gr
 - `split_dataset` loops `for i in node_indices`, sends feature value 1 left and 0 right, and appends **i**. It returns IDs without changing X. Information gain separately uses y to evaluate that question; best-split selection compares candidate gains.
 - `p_1` is the fraction of labels equal to 1 in `y[node_indices]`. Pure endpoints 0 and 1 have entropy 0: guard them before log2. Guard an empty node before dividing. Use `p_1` consistently; `p1` is a different variable.
 
+**[What confused me in the graded lab / brain-burner troubleshooting](DECISION_TREES.md#what-confused-me-in-the-graded-lab--brain-burner-troubleshooting):** entropy → split → gain → best feature. `y=1` names the positive class, not a correct prediction. `p_1=sum(y_node)/len(y_node)` counts positives; `w_left/right=len(child)/len(node_indices)` count routing proportions. Parent entropy uses `y[node_indices]`, children use their own labels, and gain subtracts the **weighted** child entropies.
+
+For `get_best_split`, loop over `range(X.shape[1])`, save `ig_i = compute_information_gain(...)`, and compare `ig_i > ig_max`. On improvement update **both** `ig_max = ig_i` and `best_feature = i`. Keep a running maximum, not merely the previous gain; never compare gain with a feature ID. Start with gain 0 and feature -1; return -1 if none has positive gain and check it before indexing. `ig_1` and `ig_i` are different names, just like `p1` and `p_1`.
+
+Tree branch weights are sample fractions; NN connection weights are learned parameters. This lab chooses discrete questions by gain; a standard NN learns weighted activations through loss gradients/backpropagation. The detailed troubleshooting section has the worked weight example, corrected selection loop and self-checks.
+
 Independent NumPy indexing reminder:
 
 ```python
@@ -1154,6 +1160,8 @@ Official API references for checking details and extending examples:
 - [StandardScaler](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html), [Pipeline](https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html), [leakage pitfalls](https://scikit-learn.org/stable/common_pitfalls.html), [Ridge](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html).
 
 ## 14. How this sheet grows
+
+**Brain-burner follow-up, 21 October 2026:** added a compact gain-selection reminder and a direct troubleshooting link in section 12a. The companion's new selection/weight examples and existing indexing snippet passed runtime checks; all 34 sheet blocks and 14 note blocks passed syntax checks. Relative links/anchors passed, and earlier content was preserved. See the [detailed verification record](DECISION_TREES.md#sources-and-verification) for checks and limits.
 
 **Graded decision-tree addition, 21 October 2026:** added the current-node ID reminder and direct link to section 4a of the detailed note. Ran the new indexing snippet and both companion snippets with exact output/assertion checks, re-ran the existing section 4 helpers, syntax-checked all 34 sheet blocks and 13 note blocks, and verified new links/fences. Python 3.12.14, NumPy 2.3.5. The course grader was not run; see the [detailed verification record](DECISION_TREES.md#sources-and-verification) for scope. Earlier records are preserved.
 

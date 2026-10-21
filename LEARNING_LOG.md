@@ -99,6 +99,15 @@ The key reminder: loop over the IDs in node_indices, inspect one selected column
 
 Verification: all three new snippets ran with exact expected outputs and embedded assertions; the existing section 4 helper example passed again. Syntax checks covered all 13 note blocks and 34 cheat-sheet blocks. New relative links/anchors and preservation checks passed. Python 3.12.14, NumPy 2.3.5; the full course notebook and grader were not run.
 
+### 21 October 2026 — Decision-tree brain-burners and best-gain tracking
+
+Extended the existing [graded-lab troubleshooting reference](knowledge/DECISION_TREES.md#what-confused-me-in-the-graded-lab--brain-burner-troubleshooting), with a brief reminder in the [same canonical cheat sheet](knowledge/PYTHON_ML_CODING_CHEAT_SHEET.md#graded-exercise-reminder-row-ids-survive-every-split). Earlier lab reproductions and accepted explanations remain in place.
+
+The reminders to revisit: y=1 is a class label, not a correct prediction; p_1 measures class mixture while child weights measure routing proportions. Parent entropy belongs to the current node. The uneven-child example shows why weighting matters. For best-split selection, compare the returned candidate gain with the largest gain seen so far and update both the score and its feature ID; ig_1 and ig_i are different names. The student's final ig_max update fixed that missing step. Trees choose discrete questions recursively; NN connection weights and backpropagation have different jobs.
+
+Added a corrected selection loop, worked gains, common error/correct patterns, self-checks and a concise lookup table. Verification covered exact walkthrough outputs, gain tracking, ties, zero gain, boundary cases, syntax and relative links/anchors; see the [scope and results](knowledge/DECISION_TREES.md#sources-and-verification). This is a study-note update, not course completion or a course-grader result.
+
+
 ## Concepts to revisit
 
 Add entries here as they appear during training. A useful entry answers three questions:
