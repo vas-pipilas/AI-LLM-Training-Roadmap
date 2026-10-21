@@ -23,7 +23,7 @@
 | Beginner → intermediate | [10. sklearn preprocessing and evaluation](#10-sklearn-preprocessing-and-evaluation) | Fit/transform, Pipeline, train/CV/test |
 | Intermediate practice | [11. Bias, variance, and regularization](#11-bias-variance-and-regularization) | Diagnose errors, tune λ, learning curves |
 | Quick lookup | [12. Debugging and copy recipes](#12-debugging-and-copy-recipes) | Common mistakes and tiny reusable checks |
-| Beginner → intermediate | [12a. Decision trees](#12a-decision-trees--concise-syntax) | Fit/predict, probabilities, growth controls; deeper note linked |
+| Beginner → intermediate | [12a. Decision trees](#12a-decision-trees--concise-syntax) | Current-node IDs, entropy/splitting pitfalls; fit/predict and growth controls |
 | Beginner → intermediate | [12b. Trees Ensemble lab](#12b-trees-ensemble-lab--pandas-forests-and-xgboost) | pandas encoding, tuning loops, random forest, XGBoost early stopping |
 | Reference | [13. Related notes and API sources](#13-related-notes-and-api-sources) | Deeper explanations and official docs |
 | Maintenance | [14. How this sheet grows](#14-how-this-sheet-grows) | Update policy and verification record |
@@ -995,6 +995,35 @@ one_label = tree.predict(X_test[:1])     # (1, 4) input -> (1,) output
 
 fit learns rules; predict follows them; predict_proba estimates class proportions in the reached leaf. Keep X two-dimensional and feature order unchanged. Standalone trees generally need no scaling. Smaller max_depth or larger min_samples_leaf restrict growth; ccp_alpha controls pruning. Select these with training/CV data before final test evaluation. sklearn's default criterion is Gini; entropy is specified here to connect to the study calculation. Original teaching example, not an exact course lab reproduction.
 
+### Graded exercise reminder: row IDs survive every split
+
+The [beginner walkthrough in Decision Trees, section 4a](DECISION_TREES.md#4a-graded-exercise-follow-the-original-row-ids) has the schoolchildren/mushroom analogy, executable entropy and split_dataset functions, nested splits, expected outputs and information-gain calculations. Keep using this canonical sheet for quick lookup.
+
+- `X` stays the full feature matrix; `y` holds aligned labels (in this mushroom exercise: 1 edible, 0 poisonous). A feature's 1 means yes to that feature, not edible.
+- `node_indices` contains original row IDs at the **current node**: all at the root, a subset in a child. `feature` selects one column; `X[i, feature]` is a scalar; `X[node_indices]` selects whole rows.
+- `split_dataset` loops `for i in node_indices`, sends feature value 1 left and 0 right, and appends **i**. It returns IDs without changing X. Information gain separately uses y to evaluate that question; best-split selection compares candidate gains.
+- `p_1` is the fraction of labels equal to 1 in `y[node_indices]`. Pure endpoints 0 and 1 have entropy 0: guard them before log2. Guard an empty node before dividing. Use `p_1` consistently; `p1` is a different variable.
+
+Independent NumPy indexing reminder:
+
+```python
+import numpy as np
+
+X = np.array([[1, 0], [1, 1], [0, 1], [0, 0], [1, 1], [0, 1]])
+node_indices, feature = [2, 3, 5], 1
+left_indices, right_indices = [], []
+for i in node_indices:
+    if X[i, feature] == 1:
+        left_indices.append(i)
+    elif X[i, feature] == 0:
+        right_indices.append(i)
+print(left_indices, right_indices)  # [2, 5] [3]
+print(X[node_indices].shape)       # (3, 2)
+assert left_indices == [2, 5] and right_indices == [3]
+```
+
+Avoid `X[i, node_indices]` (row IDs put in the column slot) and `append(X[i, node_indices])` (wrong lookup and wrong thing stored). `range(len(X))` creates root IDs but revisits every row if used inside every child. `range(len(node_indices))` produces positions `[0, 1, 2]`, not current IDs `[2, 3, 5]`; loop over the IDs themselves. Keep original IDs paired with full X/y, rather than applying them to a renumbered subset.
+
 ## 12b. Trees Ensemble lab — pandas, forests, and XGBoost
 
 For the beginner walkthrough, full tuning loops, reported results and source corrections, see [the second lab in Decision Trees](DECISION_TREES.md#8a-second-lab-ungraded-lab---trees-ensemble). The earlier ten-animal lab and section 12a remain useful.
@@ -1126,6 +1155,8 @@ Official API references for checking details and extending examples:
 
 ## 14. How this sheet grows
 
+**Graded decision-tree addition, 21 October 2026:** added the current-node ID reminder and direct link to section 4a of the detailed note. Ran the new indexing snippet and both companion snippets with exact output/assertion checks, re-ran the existing section 4 helpers, syntax-checked all 34 sheet blocks and 13 note blocks, and verified new links/fences. Python 3.12.14, NumPy 2.3.5. The course grader was not run; see the [detailed verification record](DECISION_TREES.md#sources-and-verification) for scope. Earlier records are preserved.
+
 **Trees Ensemble verification, 19 October 2026:** syntax-checked all 33 Python blocks in this sheet and checked the new links and code fences. Runtime-tested section 12a and section 12b's setup and tuning loops; the new examples used a synthetic 918-row schema fixture, not the original heart.csv. The companion note's original five blocks, 36 sweep fits, selected tree/forest models, plot and preprocessing grid also passed. **XGBoost was not installed**, so its two new examples were syntax-checked and API-reviewed only. The reported lab scores were not reproduced. See the [detailed verification record](DECISION_TREES.md#sources-and-verification) for exact checks, versions and limits. Earlier verification records remain unchanged.
 
 1. Add newly learned coding topics here when they become useful in actual labs/projects. Keep beginner refreshers separate from intermediate extensions.
@@ -1140,4 +1171,5 @@ Official API references for checking details and extending examples:
 **Addition, 19 October 2026:** added section 12a and the dedicated Decision Trees link. Reviewed against official sklearn APIs; the new Python example was not runtime-tested in this task environment. The 18 October verification record above remains unchanged.
 
 **Lab verification update, 19 October 2026:** the linked Decision Trees note now reproduces the original ungraded lab excerpt supplied in the handoff. Section 12a's sklearn block was runtime-tested offline with Python 3.12.14 and scikit-learn 1.9.1; its shape assertions passed. The earlier verification records above describe the earlier runs and are preserved.
+
 

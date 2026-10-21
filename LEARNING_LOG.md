@@ -91,6 +91,14 @@ The note explains entropy, weighted information gain, row-index splitting, the l
 
 Verification update: all five Decision Trees Python blocks and the canonical sheet's section 12a sklearn example ran offline with Python 3.12.14, NumPy 2.5.2, scikit-learn 1.9.1 and Matplotlib 3.11.2. Root calculations, split indices, depth-2 leaves, empty-branch behavior and prediction/probability assertions passed; the plot exported with Agg. The full course notebook and GUI display were not tested. Existing verification records for other topics are preserved.
 
+### 21 October 2026 — Graded decision-tree indexing clarified
+
+Extended the existing [Decision Trees note](knowledge/DECISION_TREES.md#4a-graded-exercise-follow-the-original-row-ids) and linked it from the [canonical coding cheat sheet](knowledge/PYTHON_ML_CODING_CHEAT_SHEET.md#graded-exercise-reminder-row-ids-survive-every-split). The schoolchildren/register analogy and a six-row mushroom example explain why X stays full while each node carries a subset of original row IDs. The example is invented teaching data, separate from the preserved ungraded animal lab.
+
+The key reminder: loop over the IDs in node_indices, inspect one selected column with X[i, feature], and append i. Splitting routes examples; information gain uses their labels to evaluate the question. p_1 counts positive labels at the current node (1 edible, 0 poisonous here); pure endpoints need checks before logarithms. Recorded the first-attempt mistakes with X[i, node_indices], appending values/rows, looping over counts instead of original IDs, and p1 versus p_1. This documents exercise concepts, not course completion or a claim of running the course grader.
+
+Verification: all three new snippets ran with exact expected outputs and embedded assertions; the existing section 4 helper example passed again. Syntax checks covered all 13 note blocks and 34 cheat-sheet blocks. New relative links/anchors and preservation checks passed. Python 3.12.14, NumPy 2.3.5; the full course notebook and grader were not run.
+
 ## Concepts to revisit
 
 Add entries here as they appear during training. A useful entry answers three questions:
@@ -112,3 +120,4 @@ Keep unresolved questions here instead of pretending they are understood. Once a
 ## Interesting side trails
 
 AI changes quickly and interesting topics will appear before their scheduled phase. Record them here rather than derailing the main roadmap. We can decide later whether they deserve a small experiment or should wait.
+

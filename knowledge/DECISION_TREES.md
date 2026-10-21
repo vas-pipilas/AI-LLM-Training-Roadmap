@@ -4,6 +4,8 @@
 
 **Source boundary:** section 3a faithfully reproduces the original Andrew Ng ungraded Decision Trees lab excerpt supplied in the user's handoff, including its ten-row data and calculations. The four-row example is illustrative; section 4 provides separately labeled safer reusable helpers. Section 8a explains the second, uploaded Trees Ensemble lab; its reported results are transcribed and distinguished from modern runnable adaptations. Other sklearn examples and practical explanations are independent teaching material.
 
+**Graded-exercise companion, 21 October 2026:** [section 4a](#4a-graded-exercise-follow-the-original-row-ids) explains current-node row IDs, mushroom labels, entropy, nested splits and the first-attempt indexing mistakes. Its six-row dataset is an invented executable example, separate from the preserved ungraded lab reproduction.
+
 ## 1. What a tree learns
 
 A decision tree learns a sequence of questions from labeled examples. Each internal node asks about an input feature; a branch chooses a route; a leaf supplies a prediction. Training chooses the questions and thresholds. Prediction follows the already learned questions.
@@ -266,6 +268,194 @@ The helpers use their arguments, not global names such as X_train. Otherwise the
 **Why indices?** X and y keep their original alignment. A child contains a subset of original row IDs. If a child has [2, 7, 9], read X[2], X[7], X[9]; do not silently turn those into original rows 0, 1, 2.
 
 **Scope of the helper:** other binary class encodings need conversion; multiclass entropy needs a sum across all classes. These helpers do not search thresholds for continuous features. They assume valid shapes and binary inputs rather than providing a production validation layer.
+
+## 4a. Graded exercise: follow the original row IDs
+
+This section explains the graded Andrew Ng decision-tree exercises discussed in chat, including `split_dataset` (UNQ_C2). The tiny mushroom data below are an **invented teaching example**, not a reproduction of the course dataset or a claim that the full graded notebook was executed. The earlier ungraded animal lab in section 3a stays separate.
+
+### Picture a teacher sorting schoolchildren
+
+Imagine a teacher with one big class register. Each child has a permanent register number. The teacher asks, “Are you wearing a hat?” Children answering yes go left; children answering no go right. Then the teacher asks only the children on the right another question. Their register numbers stay the same: children 2 and 5 do not become children 0 and 1.
+
+For the mushroom exercise, replace children with mushrooms and the register with `X`. Each feature column answers one yes/no question about a mushroom. A separate answer sheet, `y`, says **1 = edible, 0 = poisonous**. Those label meanings belong to this exercise; they are not a universal encoding. A feature value of 1 means “yes to this feature,” not “edible.”
+
+| Name or expression | What it means |
+| --- | --- |
+| `X` | Full feature matrix, shape `(n_samples, n_features)`; one mushroom per row |
+| `y` | Aligned labels, shape `(n_samples,)`; `y[i]` is the answer for row `X[i]` |
+| `node_indices` | Original row IDs of samples at the **current node** |
+| Root's `node_indices` | All original row IDs, e.g. `[0, 1, 2, 3, 4, 5]` |
+| Child's `node_indices` | Only IDs routed to that child, e.g. `[2, 3, 5]` |
+| `feature` | One selected column index, e.g. `1`; not a label or row ID |
+| `X[i, feature]` | One scalar cell: mushroom `i`'s value in that column |
+| `X[node_indices]` | A matrix containing the selected rows and **all** feature columns |
+| `y[node_indices]` | Labels of just the mushrooms reaching this node |
+| `p_1` | Fraction of those labels equal to 1; a single number, not the list of labels |
+
+Read `X[i, feature]` as “row first, column second.” For a two-dimensional NumPy array, `X[i]` is a whole feature row, while `X[i, feature]` is one value from that row. With a list of integer row IDs, `X[node_indices]` uses NumPy advanced indexing and produces a separate array. Merely reading that subset does not modify `X`.
+
+### Entropy counts labels, not feature values
+
+At the current node, first select its labels: `y_node = y[node_indices]`. Then:
+
+```text
+p_1 = number of labels equal to 1 / number of labels at this node
+H = -p_1 * log2(p_1) - (1 - p_1) * log2(1 - p_1)
+```
+
+With binary 0/1 labels, `np.sum(y_node)` counts the edible mushrooms. `p_1 = 0` means all poisonous; `p_1 = 1` means all edible. Both nodes are **pure**, so entropy is 0. Half edible and half poisonous gives maximum binary entropy, 1 bit. Entropy describes how mixed the answers are; it does not tell us which feature to choose by itself.
+
+Handle the pure endpoints **before** calling the logarithm: NumPy cannot evaluate `log2(0)` as a finite number, and multiplying it by zero afterward can produce `nan`. For an empty label array, the fraction is undefined; the teaching helper below returns 0.0 by convention before dividing. That makes an empty child's zero-weight entropy contribution safe, but an empty child is not a useful leaf to recurse into.
+
+In the graded entropy exercise, `compute_entropy(y)` receives the labels to summarize. At a child node, call it with `y[node_indices]`, rather than using all labels again. This differs from section 3a's `entropy(p)`, which receives an already computed scalar fraction.
+
+### Runnable example: split once, then split a child
+
+Run this whole block independently with NumPy installed. The feature meanings are invented yes/no flags for learning the indexing.
+
+```python
+import numpy as np
+
+def compute_entropy(y):
+    if len(y) == 0:
+        return 0.0
+    p_1 = np.sum(y) / len(y)  # y contains only binary 0/1 labels
+    if p_1 == 0 or p_1 == 1:
+        return 0.0
+    return float(-p_1 * np.log2(p_1)
+                 - (1 - p_1) * np.log2(1 - p_1))
+
+def split_dataset(X, node_indices, feature):
+    left_indices = []
+    right_indices = []
+    for i in node_indices:
+        if X[i, feature] == 1:
+            left_indices.append(i)
+        elif X[i, feature] == 0:
+            right_indices.append(i)
+    return left_indices, right_indices
+
+# Columns: 0 = has spots?, 1 = has a ring?
+X = np.array([
+    [1, 0],  # original row 0
+    [1, 1],  # original row 1
+    [0, 1],  # original row 2
+    [0, 0],  # original row 3
+    [1, 1],  # original row 4
+    [0, 1],  # original row 5
+])
+y = np.array([1, 1, 0, 1, 0, 0])  # 1 edible, 0 poisonous
+X_before = X.copy()
+root_indices = list(range(len(X)))
+
+left, right = split_dataset(X, root_indices, feature=0)
+print("Root:", left, right)
+# Now split ONLY the root's right child, still using the full X.
+node_indices = right
+child_left, child_right = split_dataset(X, node_indices, feature=1)
+print("Right child:", child_left, child_right)
+print("One cell:", X[5, 1])
+print("Current rows:", X[node_indices].tolist())
+print("Current labels:", y[node_indices].tolist())
+p_1 = np.sum(y[node_indices]) / len(node_indices)
+print(f"Current p_1: {p_1:.6f}")
+print(f"Current entropy: {compute_entropy(y[node_indices]):.6f}")
+print("X unchanged:", np.array_equal(X, X_before))
+
+assert left == [0, 1, 4] and right == [2, 3, 5]
+assert child_left == [2, 5] and child_right == [3]
+assert X[node_indices].shape == (3, 2)
+assert compute_entropy(np.array([0, 0])) == 0.0
+assert compute_entropy(np.array([1, 1])) == 0.0
+assert compute_entropy(np.array([])) == 0.0
+assert compute_entropy(np.array([0, 1])) == 1.0
+assert np.isclose(compute_entropy(y[node_indices]), 0.9182958340544896)
+assert np.array_equal(X, X_before)
+```
+
+Expected output:
+
+```text
+Root: [0, 1, 4] [2, 3, 5]
+Right child: [2, 5] [3]
+One cell: 1
+Current rows: [[0, 1], [0, 0], [0, 1]]
+Current labels: [0, 1, 0]
+Current p_1: 0.333333
+Current entropy: 0.918296
+X unchanged: True
+```
+
+The nested routes are:
+
+```text
+root rows [0, 1, 2, 3, 4, 5], ask column 0
+  value 1 -> left  [0, 1, 4]
+  value 0 -> right [2, 3, 5], ask column 1
+    value 1 -> left  [2, 5], labels [0, 0]
+    value 0 -> right [3],    labels [1]
+```
+
+At the right child, `for i in node_indices` visits **2, then 3, then 5**. It reads `X[2, 1] = 1`, `X[3, 1] = 0`, and `X[5, 1] = 1`. Appending `i` saves those original row IDs. The resulting lists let us look up either features or aligned labels later.
+
+`split_dataset` creates new lists; it never assigns to `X`, removes rows, or renumbers them. The full register stays on the desk; only the list of children being considered changes. Keep passing the full `X` with original IDs. If you deliberately create `X_node = X[node_indices]`, its row positions start at 0; do not then index `X_node` using those original IDs. Section 3a demonstrates explicit local-to-original mapping for that different approach.
+
+The shown `if/elif` follows the graded exercise's binary feature contract: 1 goes left and 0 goes right. An unexpected value such as 2 or NaN matches neither branch and would be omitted, so validate/encode data before reusing this outside the exercise. Section 4's `else` version assumes the same valid binary inputs; for those inputs the results are identical. Left/right is this exercise's convention, not a universal rule for every tree implementation.
+
+### Splitting answers “where?”; information gain answers “was it helpful?”
+
+`split_dataset` needs only `X`, the current IDs and a feature. It asks one already selected feature question and returns two ID lists. It does not inspect `y`, compute entropy, decide whether the groups are pure, or choose the best question.
+
+`compute_information_gain` uses those lists to read the labels and score that candidate question. `get_best_split` compares scores for candidate columns at the same node. In the example, the root's column 0 was chosen just to show routing; it is **not** a claim that column 0 is best. Both root children have mixed labels, and that root question has gain only about 0.081704 bits.
+
+Continue the runnable block above:
+
+```python
+def compute_information_gain(X, y, node_indices, feature):
+    if len(node_indices) == 0:
+        return 0.0
+    left_indices, right_indices = split_dataset(X, node_indices, feature)
+    n = len(node_indices)  # CURRENT node size, not the full len(X)
+    weighted_children = (
+        len(left_indices) / n * compute_entropy(y[left_indices])
+        + len(right_indices) / n * compute_entropy(y[right_indices])
+    )
+    return compute_entropy(y[node_indices]) - weighted_children
+
+root_gain = compute_information_gain(X, y, root_indices, feature=0)
+child_gain = compute_information_gain(X, y, right, feature=1)
+print(f"Root gain, column 0: {root_gain:.6f}")
+print(f"Right-child gain, column 1: {child_gain:.6f}")
+assert np.isclose(root_gain, 0.08170416594551044)
+assert np.isclose(child_gain, 0.9182958340544896)
+assert compute_information_gain(X, y, [], feature=0) == 0.0
+assert compute_information_gain(X, y, left, feature=0) == 0.0
+```
+
+Expected output:
+
+```text
+Root gain, column 0: 0.081704
+Right-child gain, column 1: 0.918296
+```
+
+For the right child, the parent labels are `[0, 1, 0]`, so `p_1 = 1/3` and parent entropy is 0.918296. Its two children are pure: `[0, 0]` and `[1]`. Their weights are **2/3 and 1/3**, because three mushrooms reached this node, even though `X` still has six rows. Weighted child entropy is `(2/3)*0 + (1/3)*0 = 0`; gain equals the parent's entropy. For an unchanged/constant feature, one child is empty and the other contains the whole current node, so gain is zero.
+
+### Mistakes from the first attempts
+
+| Tempting code or idea | Why it goes wrong | Use instead |
+| --- | --- | --- |
+| `X[i, node_indices]` | The second slot selects **columns**; node_indices contains row IDs. It may return several cells or raise an out-of-bounds error. | `X[i, feature]` for one cell; `X[node_indices]` for whole selected rows |
+| `left_indices.append(X[i, node_indices])` | Uses row IDs as columns and stores cell values/an array, losing sample identity. | `left_indices.append(i)` |
+| Append `X[i, feature]` | Stores only 0/1 answers; many mushrooms share them. | Append the original row ID `i` |
+| Append `X[i]` | Stores a whole feature row instead of an index usable with both X and y. | Append `i` |
+| `for i in range(len(X))` at every node | Revisits all original rows, including mushrooms that went to another branch. | `for i in node_indices`; `range(len(X))` is useful to create the **root** ID list |
+| `for i in range(len(node_indices))` then `X[i, feature]` | On `[2, 3, 5]`, visits original rows `[0, 1, 2]` instead of `[2, 3, 5]`. | Loop over IDs directly, or map a position k to `i = node_indices[k]` |
+| Compute the child's `p_1` from all `y` or divide by `len(X)` | Measures the root's mixture instead of this node's mixture. | Use `y[node_indices]` and the current node size |
+| Define `p_1` then use `p1` | These are two different Python names; an undefined name raises NameError, or a stale notebook variable can silently give a wrong value. | Spell `p_1` consistently; restart/run cells in order |
+| Compute `log2(p_1)` before checking endpoints | Pure nodes can produce warnings/infinite or NaN terms. | Return 0 for `p_1 == 0` or `p_1 == 1` first |
+
+A quick check before coding: **Which rows are here? Which column am I asking about? Am I returning the mushrooms' IDs or their answers?** Then evaluate the split separately using the labels.
 
 ## 5. Building a whole tree
 
@@ -698,6 +888,10 @@ A small tree is useful when I need to inspect explicit rules. Deep trees become 
 
 ## Sources and verification
 
+- Graded-exercise context: the supplied chat excerpt includes UNQ_C2's split_dataset and the current request supplies the label meanings and first-attempt mistakes. Section 4a's six-row mushroom data are invented to demonstrate those concepts; the complete graded notebook and course grader were not retrieved or executed.
+
+**Graded-exercise verification, 21 October 2026:** executed both section 4a Python blocks in order and the canonical sheet's new indexing reminder; exact printed outputs and all embedded assertions passed. Checked nested original-ID routing, current-node p_1/entropy/gain, unchanged X, empty-label and pure-label entropy, and zero gain for a constant feature/empty parent. Re-ran section 4's existing helper block with NumPy floating-point errors set to raise, including endpoint checks. Syntax-checked all 13 Python blocks in this note and all 34 in the sheet; checked balanced fences and all four new relative links/anchors. Compared against the main-branch originals: existing material is preserved, with only the sheet's navigation description replaced. Environment: Python 3.12.14, NumPy 2.3.5. Other existing examples were syntax-checked only in this update; their earlier runtime verification records below remain unchanged.
+
 - Uploaded **Ungraded Lab - Trees Ensemble**, `Pasted text(6).txt`: second-lab code, printed scores and early-stopping log, explained in section 8a. No dataset CSV accompanied the text.
 - [RandomForestClassifier API](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html), [pandas get_dummies](https://pandas.pydata.org/docs/reference/api/pandas.get_dummies.html), [XGBoost sklearn API](https://xgboost.readthedocs.io/en/stable/python/python_api.html#xgboost.XGBClassifier), and [prediction behavior](https://xgboost.readthedocs.io/en/stable/prediction.html#early-stopping): current-library corrections and adaptations.
 
@@ -711,4 +905,5 @@ A small tree is useful when I need to inspect explicit rules. Deep trees become 
 - [Cost-complexity pruning example](https://scikit-learn.org/stable/auto_examples/tree/plot_cost_complexity_pruning.html).
 
 **Verification, 19 October 2026:** ran all five Python blocks in this note offline, with the stated continuation dependencies, using Python 3.12.14, NumPy 2.5.2, scikit-learn 1.9.1 and Matplotlib 3.11.2. Assertions checked all three root splits and gains against an independent class-count entropy calculation, the depth-2 split choices and four pure leaves, node-local to original index mapping, the four-row illustrative result, and safer-helper empty-parent, empty-child, constant-feature and pure-node cases. The original empty-child call raised ZeroDivisionError as expected. The Iris GridSearchCV example and prediction/probability assertions passed; the plot continuation exported a PNG using the noninteractive Agg backend (GUI display was not tested). The canonical sheet's section 12a sklearn block also ran successfully. The complete course notebook and any course plotting/recursive-builder utilities were not supplied or executed; this verifies the handoff reproduction and examples here. Earlier verification records for other cheat-sheet sections remain unchanged.
+
 
