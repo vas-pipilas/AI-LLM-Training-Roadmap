@@ -150,6 +150,16 @@ The mistake to remember: X[0] contains the first row's values; X.shape[0] counts
 
 Verification: all 38 canonical Python blocks passed syntax checks, all 11 NumPy blocks in sections 2–4 ran with assertions, all earlier examples were preserved, and new canonical anchors, fences and whitespace passed. Python 3.12.14, NumPy 2.3.5. Other sections and course graders were not runtime-tested again. This records a reference update, not new course completion or mastery.
 
+### 25 October 2026 — Anomaly Detection lab completed; the reason behind F1
+
+Completed Andrew Ng's anomaly-detection lab according to the supplied user handoff: best epsilon **8.990853e-05**, best F1 **0.875**, and all unit tests passed per the user's screenshot. These are recorded user-reported lab results; the screenshot, original data and course grader were not independently validated during this documentation update.
+
+The implementation passed, but I still needed the abstraction behind it: why calculate TP/FP/FN at all? A density score says how unusual an example looks; it cannot say whether an alarm is correct. Compare predictions with known validation labels, separate caught anomalies/false alarms/misses, derive precision and recall, combine them into F1, then compare epsilon candidates. Following formula instructions is different from being able to explain that chain.
+
+Added a [dedicated anomaly guide](knowledge/ANOMALY_DETECTION.md) with toy calculations and both exercises line by line. Extended the [existing canonical syntax sheet](knowledge/PYTHON_ML_CODING_CHEAT_SHEET.md#12d-anomaly-detection) rather than creating another NumPy cheat sheet: Boolean vector comparisons, sums, parentheses with &, division guards, arange, and variance translation invariance. The focused NumPy and unsupervised notes link to the same material.
+
+Still to practice: predict how moving epsilon changes one row's confusion category; reconstruct the mean → density → prediction → counts → metrics → cutoff chain without copying the notebook. Completion is recorded; detailed fluency remains a learning goal.
+
 ## Concepts to revisit
 
 Add entries here as they appear during training. A useful entry answers three questions:
@@ -171,6 +181,7 @@ Keep unresolved questions here instead of pretending they are understood. Once a
 ## Interesting side trails
 
 AI changes quickly and interesting topics will appear before their scheduled phase. Record them here rather than derailing the main roadmap. We can decide later whether they deserve a small experiment or should wait.
+
 
 
 

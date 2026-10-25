@@ -57,6 +57,8 @@ They should work both as a deeper refresher when I cannot watch a lecture and as
 
 - [Unsupervised ML and K-means — Detailed Study Note](knowledge/UNSUPERVISED_LEARNING_AND_KMEANS.md) — coordinates, samples/centroids, nested loops, min versus argmin, assignment/update, convergence, scaling, limitations and clustering LLM embeddings versus self-supervised pretraining.
 
+- [Anomaly Detection — ELI5 Theory and Lab Guide](knowledge/ANOMALY_DETECTION.md) — mean/variance, Gaussian density, training versus validation, why TP/FP/FN lead to F1, and both graded exercises line by line.
+
 This section should grow selectively. Not every lesson deserves a document; core concepts that later knowledge depends on do.
 
 ## Repository map
@@ -68,4 +70,5 @@ This section should grow selectively. Not every lesson deserves a document; core
 - [CERTIFICATIONS.md](CERTIFICATIONS.md) — certification candidates and, importantly, when I should actually attempt them.
 
 This repository is deliberately written as a human learning journal, not as a corporate project plan. It should change when my knowledge, interests, or the AI ecosystem changes.
+
 

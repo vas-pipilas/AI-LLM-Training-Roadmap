@@ -29,6 +29,8 @@ For syntax lookup, use the [canonical Python ML coding cheat sheet](PYTHON_ML_CO
 
 ## Navigation
 
+Related task: the completed anomaly lab has a [dedicated ELI5 theory and code walkthrough](ANOMALY_DETECTION.md). K-means learns group centers by distance; this detector learns normal feature distributions and flags low-density examples. Fitting Gaussian parameters uses unlabeled training measurements, while choosing epsilon uses labeled cross-validation examples. See the canonical [anomaly syntax entry](PYTHON_ML_CODING_CHEAT_SHEET.md#12d-anomaly-detection) for masks, counts and F1; keep this note focused on clustering.
+
 - [1. Learning without supplied labels](#1-learning-without-supplied-labels)
 - [2. Features are coordinates](#2-features-are-coordinates)
 - [3. Distances, min and argmin](#3-distances-min-and-argmin)
@@ -701,5 +703,6 @@ The linked official NumPy, sklearn, Sentence Transformers and Hugging Face refer
 **Verified 25 October 2026:** all eight Python blocks ran offline in their stated order, including the three explicitly marked continuation sections. Assertions checked coordinates, shapes, distances, min/argmin, exact assignments, center updates, the two-cycle SSE history, sklearn fit/predict/transform and the two expected synthetic text groups (allowing arbitrary ID order). Additional checks covered first-index ties, an empty group, floating means from integer centers, preservation of input centers, K different from n, loop/vectorized parity and nonincreasing SSE over 30 cycles on generated 3-D data.
 
 The canonical sheet's new section also ran; all 35 sheet Python blocks passed syntax checks, with existing content preserved. New relative links/anchors and fences passed. Environment: Python 3.12.14, NumPy 2.5.2, scikit-learn 1.9.1. Windows core-count/MKL warnings appeared on the first run; the final check used OMP_NUM_THREADS=1 and LOKY_MAX_CPU_COUNT=1. Existing sheet sections were syntax-checked, not all runtime-tested again. Real embedding generation, language-model training and any course grader were not run.
+
 
 

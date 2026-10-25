@@ -224,6 +224,8 @@ Broadcasting is convenient, but when a result looks bizarre, inspect the shapes 
 
 ## 9. Boolean comparisons and thresholding
 
+For anomaly density scores, the direction is `prediction = p_val < epsilon`: low density triggers an alarm. For worked True/False comparisons, `&` with parentheses, `np.sum` counting, aligned prediction/label arrays, `np.arange` and division guards, use the [canonical Boolean counting reference](PYTHON_ML_CODING_CHEAT_SHEET.md#boolean-counting-and-guarded-division). The [anomaly note](ANOMALY_DETECTION.md#5-why-tp-fp-and-fn-are-necessary) explains why these counts are needed.
+
 ```python
 probabilities >= 0.5
 ```
@@ -316,6 +318,10 @@ X_norm = (X - mu) / sigma
 ```
 
 Normalization changes the scale of input features. It is **not regularization** and does not use lambda.
+
+---
+
+For a concrete `X - mu` trace and why subtracting a fixed feature offset preserves variance, see [centering preserves variance](PYTHON_ML_CODING_CHEAT_SHEET.md#centering-preserves-variance). Centering changes the mean to zero, not the variance. `mean(X**2)` is not variance unless X is centered. For mean → Gaussian density → epsilon → F1, use the [dedicated anomaly lab guide](ANOMALY_DETECTION.md).
 
 ---
 
@@ -472,3 +478,4 @@ column = x.reshape(-1, 1)
 ```
 
 If confused: **print the shape first.**
+

@@ -26,6 +26,7 @@
 | Beginner → intermediate | [12a. Decision trees](#12a-decision-trees--concise-syntax) | Current-node IDs, entropy/splitting pitfalls; fit/predict and growth controls |
 | Beginner → intermediate | [12b. Trees Ensemble lab](#12b-trees-ensemble-lab--pandas-forests-and-xgboost) | pandas encoding, tuning loops, random forest, XGBoost early stopping |
 | Beginner → intermediate | [12c. Unsupervised learning and K-means](#12c-unsupervised-learning-and-k-means) | Coordinates, min/argmin, clustering syntax and LLM distinction |
+| Beginner → intermediate | [12d. Anomaly detection](#12d-anomaly-detection) | Gaussian scoring, Boolean counts, threshold selection and F1 |
 | Reference | [13. Related notes and API sources](#13-related-notes-and-api-sources) | Deeper explanations and official docs |
 | Maintenance | [14. How this sheet grows](#14-how-this-sheet-grows) | Update policy and verification record |
 
@@ -308,6 +309,51 @@ Trace the running sums: `[0, 0] → [1, 2] → [4, 6] → [9, 12]`. The first me
 
 In Andrew Ng's anomaly-detection Gaussian parameter estimate, use feature-wise `mu` and variance `var` (often named `sigma2`), both shape `(n,)`. The lab's divisor is m: NumPy's default **ddof=0**, made explicit above. `ddof=1` divides by m−1 and gives a different sample-variance estimate. Variance is not standard deviation: `np.std(X, axis=0)` is the square root of variance. These estimates alone are not a complete anomaly detector. See the official [mean](https://numpy.org/doc/stable/reference/generated/numpy.mean.html) and [variance](https://numpy.org/doc/stable/reference/generated/numpy.var.html) references.
 
+### Boolean counting and guarded division
+
+For the anomaly lab, density scores become decisions; compare decisions with known labels before counting successes and mistakes. Each array must describe the same examples in the same order, with matching flat shapes.
+
+```python
+import numpy as np
+
+p_val = np.array([0.01, 0.04, 0.08, 0.20, 0.70])
+y_val = np.array([1, 0, 1, 1, 0])
+epsilon = 0.10
+prediction = p_val < epsilon  # [True, True, True, False, False]
+assert prediction.shape == y_val.shape == (5,)
+
+tp = np.sum((prediction == 1) & (y_val == 1))  # 2
+fp = np.sum((prediction == 1) & (y_val == 0))  # 1
+fn = np.sum((prediction == 0) & (y_val == 1))  # 1
+tn = np.sum((prediction == 0) & (y_val == 0))  # 1
+assert (tp, fp, fn, tn) == (2, 1, 1, 1)
+assert True == 1 and False == 0
+assert np.sum(prediction) == 3  # number of predicted anomalies, not number correct
+
+if tp + fp == 0:
+    prec = 0
+else:
+    prec = tp / (tp + fp)
+if tp + fn == 0:
+    rec = 0
+else:
+    rec = tp / (tp + fn)
+if prec + rec == 0:
+    F1 = 0
+else:
+    F1 = 2 * prec * rec / (prec + rec)
+np.testing.assert_allclose([prec, rec, F1], [2/3, 2/3, 2/3])
+np.testing.assert_allclose(np.arange(0, 1, 0.25), [0, 0.25, 0.5, 0.75])
+```
+
+`p_val < epsilon` compares **every** score with one scalar; no explicit row loop is needed. `(prediction == 1)` and `(y_val == 1)` create masks; `&` combines them element by element; `np.sum` counts True entries. Python/NumPy booleans compare equal to 1/0, so casting to integers is unnecessary. Equivalent TP syntax is `np.sum(prediction & (y_val == 1))`. Do not use `and` for array masks; keep parentheses around each comparison.
+
+The guards choose zero when a ratio is undefined; they prevent 0/0, not all possible data errors. `np.arange(start, stop, step)` returns evenly spaced values, normally excluding stop. Float steps can have rounding effects; the lab's range/1000 step gives roughly 1000 candidates, not a promised exact count. See [NumPy arange](https://numpy.org/doc/stable/reference/generated/numpy.arange.html).
+
+**Common errors:** defining `prediction` but counting `predictions` can use a stale notebook variable or fail. Comparing `(m,)` predictions to `(m,1)` labels silently creates an `(m,m)` mask. Comparing density scores directly to labels is not classification evaluation. A comparison is `==`; assignment is `=`. A single `if prediction:` cannot choose one truth value for a multi-element array.
+
+For why these counts choose epsilon, use the [dedicated anomaly walkthrough](ANOMALY_DETECTION.md#5-why-tp-fp-and-fn-are-necessary). Keep that theory there.
+
 ### NumPy for the specialization: quick lookup
 
 Use this table for recall; the examples above and [K-means walkthrough](UNSUPERVISED_LEARNING_AND_KMEANS.md) explain the steps. X is a 2-D numeric array with shape (m, n); idx is an integer NumPy array of shape (m,) holding cluster IDs.
@@ -353,6 +399,25 @@ assert (yhat.ravel() - y).shape == (3,)
 ```
 
 An incompatible `(2, 3) + (2,)` raises an error; a compatible but unintended `(m, 1) - (m,)` silently creates `(m, m)`. Print and assert shapes before computing losses.
+
+### Centering preserves variance
+
+This extends the feature-statistics example above: subtracting a fixed value moves the center without changing the spread. Broadcasting subtracts the matching feature mean from each row.
+
+```python
+import numpy as np
+
+X = np.array([[1., 2.], [3., 4.], [5., 6.]])
+mu = np.mean(X, axis=0)               # (2,): [3., 4.]
+centered = X - mu                    # (3,2): [-2,-2], [0,0], [2,2]
+np.testing.assert_allclose(centered, [[-2,-2], [0,0], [2,2]])
+np.testing.assert_allclose(np.mean(centered, axis=0), [0., 0.])
+np.testing.assert_allclose(np.var(centered, axis=0), np.var(X, axis=0))
+np.testing.assert_allclose(np.mean(centered**2, axis=0), [8/3, 8/3])
+np.testing.assert_allclose(np.mean(X**2, axis=0), [35/3, 56/3])
+```
+
+For any fixed feature offset c, the shifted mean is mu−c, so `(X-c)-(mu-c) = X-mu`: deviations, and therefore variance, stay the same (up to numerical rounding). Centered values have zero mean, not zero variance. `mean(X**2)` is not generally variance; it equals variance only when the mean is zero. The [NumPy variance definition](https://numpy.org/doc/stable/reference/generated/numpy.var.html) uses squared deviations from the mean.
 
 ### Elementwise multiplication, dot product, and matrix multiplication
 
@@ -1300,6 +1365,23 @@ Initialize → assign → average → repeat. K-means minimizes within-group **s
 
 **LLM connection:** embed texts → cluster fixed vectors → inspect topics. This does not train the encoder. Self-supervised LLM pretraining derives token targets from text and updates neural weights with a prediction loss. Row L2 normalization and column standardization differ; ordinary K-means on unit embeddings is not automatically spherical/cosine K-means.
 
+## 12d. Anomaly detection
+
+Fit normal feature means/variances → score validation examples with a product of Gaussian densities → try epsilon values → compare predictions with labels → TP/FP/FN → precision/recall/F1 → keep the best validation cutoff. Future alarms reuse saved training parameters and chosen epsilon.
+
+**Completed lab, user-reported:** best epsilon **8.990853e-05**, best F1 **0.875**, all unit tests passed per the user's screenshot handoff. The original screenshot/course grader was not independently checked here; completion does not imply fluent recall.
+
+| Need | Canonical reference |
+| --- | --- |
+| Feature mean, population variance and shape/indexing | [Worked feature statistics](#from-my-averaging-loop-to-feature-statistics) |
+| Why X−mu broadcasts and preserves variance | [Centering](#centering-preserves-variance) |
+| Vector comparisons, masks, &, Boolean sums, arange and division guards | [Boolean counting](#boolean-counting-and-guarded-division) |
+| Why counts are needed; density vs probability; train vs CV; two graded exercises line by line | [Anomaly Detection — detailed ELI5 note](ANOMALY_DETECTION.md) |
+
+`p_val < epsilon` predicts anomaly, unlike the usual high-sigmoid-score positive rule. Density is not an anomaly probability. TP means anomaly caught, FP means false alarm, FN means anomaly missed. Precision = TP/(TP+FP), recall = TP/(TP+FN); F1 compares the tradeoff across thresholds. TN does not enter positive-class F1.
+
+**The missing abstraction:** a score alone cannot tell whether an alarm is correct. Labels let us separate correct alarms, false alarms and misses. Those counts let us evaluate the cutoff; repeating that evaluation lets us choose epsilon. The [worked threshold table](ANOMALY_DETECTION.md#one-tiny-dataset-three-alarm-settings) makes this concrete. Keep full theory and complete functions in that dedicated note.
+
 ## 13. Related notes and API sources
 
 The focused notes remain useful; this page adds one canonical syntax entry point rather than replacing them:
@@ -1322,6 +1404,8 @@ Official API references for checking details and extending examples:
 - [StandardScaler](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html), [Pipeline](https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html), [leakage pitfalls](https://scikit-learn.org/stable/common_pitfalls.html), [Ridge](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html).
 
 ## 14. How this sheet grows
+
+**Anomaly Detection follow-up, 25 October 2026:** added section 12d and extended existing array/statistics references with Boolean counting, guarded ratios and centering invariance. The dedicated [anomaly guide](ANOMALY_DETECTION.md#sources-and-verification) records the exact check scope: 45 syntax-checked blocks, seven executed teaching blocks, threshold-table/search fixtures and new links. The user's epsilon/F1 and passing course tests remain attributed to the screenshot handoff; the course grader was not rerun.
 
 **NumPy recall follow-up, 25 October 2026:** expanded existing sections 2–4 with counts versus row values, the corrected averaging loop, feature-wise mean/population variance, a quick lookup and a small index/distance example. All 38 sheet Python blocks passed syntax checks; all 11 NumPy blocks in sections 2–4 ran with their numerical/shape assertions. Original examples were preserved. New canonical anchors, code fences and whitespace checks passed. Environment: Python 3.12.14, NumPy 2.3.5. Other sections and the course grader were not runtime-tested again.
 
@@ -1347,6 +1431,7 @@ Official API references for checking details and extending examples:
 **Addition, 19 October 2026:** added section 12a and the dedicated Decision Trees link. Reviewed against official sklearn APIs; the new Python example was not runtime-tested in this task environment. The 18 October verification record above remains unchanged.
 
 **Lab verification update, 19 October 2026:** the linked Decision Trees note now reproduces the original ungraded lab excerpt supplied in the handoff. Section 12a's sklearn block was runtime-tested offline with Python 3.12.14 and scikit-learn 1.9.1; its shape assertions passed. The earlier verification records above describe the earlier runs and are preserved.
+
 
 
 
