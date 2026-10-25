@@ -130,6 +130,18 @@ The [same canonical cheat sheet](knowledge/PYTHON_ML_CODING_CHEAT_SHEET.md#12c-u
 
 Verification for this follow-up: all 11 note blocks and the canonical K-means example ran offline with numerical/shape assertions; all 35 canonical blocks passed syntax checks. Specific mask, axis, scalar-broadcast, singleton, tie, empty-group and K-versus-n checks passed, as did new links/anchors and preservation of all earlier code examples. See the note's verification record for environment and scope.
 
+### 25 October 2026 — Full K-means lab and image compression
+
+Recorded the completed Andrew Ng K-means clustering lab from the supplied full lab and user's handoff. **My current assessment: I get the high-level ideas; I need to use them hands-on to learn them more deeply.** This records lab completion and high-level understanding, not detailed mastery or specialization completion. Both graded functions show passing outputs in the supplied text; the course grader was not rerun here.
+
+Added only the missing random-row initialization and image-compression details to the [existing lesson](knowledge/UNSUPERVISED_LEARNING_AND_KMEANS.md#5b-image-compression-pixels-to-palette-and-back), with short lookup reminders in the [same canonical cheat sheet](knowledge/PYTHON_ML_CODING_CHEAT_SHEET.md#12c-unsupervised-learning-and-k-means). The assignment, means and iteration explanations already existed and remain canonical. Corrected the previously transcribed Exercise 2 centroid value to 2.63365645 from the full lab.
+
+The mental model to reuse: each pixel is one RGB sample; reshape (128, 128, 3) to (16384, 3), learn 16 representative colors, then use integer idx to retrieve whole palette rows with `centroids[idx, :]`. Reshape those colors back to the image grid. idx holds color IDs, not distances. The 393,216 versus 65,920 bit comparison assumes an 8-bit RGB palette and packed 4-bit indices; the reconstructed RGB array is not a packed compressed file. Original shades are approximated, so the process is lossy.
+
+Next hands-on practice: use a second RGB image, predict each shape before running, trace a few pixel IDs to their palette rows, vary K and the random start, and compare visual error with the theoretical storage budget. Explain why shuffling indices avoids repeated rows but can still choose identical colors.
+
+Verification: all 14 lesson blocks and the canonical K-means example ran with assertions; all 35 canonical Python blocks passed syntax checks. Pixel order, palette lookup, lossy error, initialization, storage math, new links and preservation of earlier examples passed. See the lesson's verification record for versions and scope. The course notebook/grader and an actual packed image encoder were not run here.
+
 ## Concepts to revisit
 
 Add entries here as they appear during training. A useful entry answers three questions:

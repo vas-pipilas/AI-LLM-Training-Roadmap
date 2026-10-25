@@ -1,6 +1,6 @@
 # Unsupervised ML and K-means — from coordinates to LLM embeddings
 
-**Study note, updated 25 October 2026.** Read the tiny examples, run them, and explain each step aloud. This is a study resource, not course completion or a claim of mastery. Runnable arrays below are invented teaching examples. The course progress and approximate output below are recorded separately from the user's handoff.
+**Study note, updated 25 October 2026.** Read the tiny examples, run them, and explain each step aloud. This is a study resource, not a claim of detailed mastery. Runnable arrays below are invented teaching examples. Completed-lab progress and recorded output are attributed to the user's handoff and uploaded lab.
 
 ### Completed K-means exercises
 
@@ -9,15 +9,19 @@
 | Exercise 1: `find_closest_centroids` | Completed; assignment implementation and walkthrough preserved in section 4. |
 | Exercise 2: `compute_centroids` | Completed; user confirms all unit tests passed. The accepted loop and a full teaching function appear in section 5. |
 
-The handoff reports these approximate Exercise 2 centroids from the screenshot:
+**Full Andrew Ng K-means clustering lab completed, as reported by the user.** The supplied full lab includes passing outputs for both graded functions, the sample-data iteration, random initialization and RGB image reconstruction. This does not mark the specialization complete.
+
+**Self-assessment:** high-level understanding achieved; deeper fluency requires hands-on reuse. Reading the code and passing the lab do not yet establish detailed mastery. Revisit the reshape and palette lookup below by running them on another image and explaining each intermediate shape.
+
+The uploaded full lab records these Exercise 2 centroids (correcting the earlier screenshot transcription):
 
 | Centroid index | Feature 0 mean | Feature 1 mean |
 | --- | --- | --- |
 | 0 | 2.42830111 | 3.15792418 |
-| 1 | 5.81350331 | 2.6365645 |
+| 1 | 5.81350331 | 2.63365645 |
 | 2 | 7.11938687 | 3.6166844 |
 
-This is a `(3, 2)` result: three groups, two feature means per group. It records one course update result, not proof that the entire K-means lifecycle or specialization is complete. The course data and grader were not rerun for this documentation update.
+This is a `(3, 2)` result: three groups, two feature means per group. It records one centroid-update result; completion of the full lab is recorded separately above. The course data and grader were not rerun for this documentation update.
 
 Start with [Exercise 1 mistakes](#exercise-1-mental-gymnastics-counts-vectors-and-identities), [Exercise 2 masks and means](#exercise-2-mental-gymnastics-one-group-all-its-rows), or the [syntax lookup](#k-means-syntax-lookup).
 
@@ -30,6 +34,8 @@ For syntax lookup, use the [canonical Python ML coding cheat sheet](PYTHON_ML_CO
 - [3. Distances, min and argmin](#3-distances-min-and-argmin)
 - [4. Read the nested loops](#4-read-the-nested-loops)
 - [5. Update the centers and repeat](#5-update-the-centers-and-repeat)
+- [5a. Random starting rows](#5a-random-starting-rows)
+- [5b. Image compression: pixels to palette and back](#5b-image-compression-pixels-to-palette-and-back)
 - [6. Scaling and practical sklearn syntax](#6-scaling-and-practical-sklearn-syntax)
 - [7. Choosing K and limitations](#7-choosing-k-and-limitations)
 - [8. The connection to LLM engineering](#8-the-connection-to-llm-engineering)
@@ -396,6 +402,131 @@ Initial SSE was 2. The first update reduces it to 1. The next cycle changes noth
 
 Exact assignment and mean steps cannot increase SSE, apart from numerical effects and implementation policies. They can settle at a local solution. Initialization matters; multiple restarts and K-means++ help find better solutions. A fixed seed supports repeatability, not correctness. Consult the [KMeans API](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html) for these options and stopping details.
 
+## 5a. Random starting rows
+
+The lab initializes centers by shuffling the sample **indices**, then taking the first K complete rows:
+
+```python
+import numpy as np
+
+def kMeans_init_centroids(X, K):
+    randidx = np.random.permutation(X.shape[0])
+    return X[randidx[:K]]
+
+# Independent teaching data: each row is distinct.
+init_demo = np.arange(30.).reshape(10, 3)
+starting_demo = kMeans_init_centroids(init_demo, 4)
+assert starting_demo.shape == (4, 3)
+assert np.unique(starting_demo, axis=0).shape[0] == 4
+assert all(np.any(np.all(init_demo == row, axis=1)) for row in starting_demo)
+```
+
+For m=10, a shuffled order might begin `[7, 2, 9, 0, ...]`; K=3 selects rows 7, 2 and 9. The shuffle prevents selecting the same **row index** twice. Different rows can still have identical RGB values, so distinct indices do not guarantee distinct colors. Require 1 <= K <= m.
+
+These are initial guesses, not final means. Feed them into the [existing assignment/update cycle](#the-complete-cycle). The lab uses ten cycles: assign all samples to the current centers, then average their assigned rows. Changing max_iters changes the number of cycles, not K. After the last mean update, recompute assignments against the final centers before reconstruction; the lab's run_kMeans returns assignments made just before that update.
+
+The earlier lifecycle section already covers restarts and the distortion objective: compare separate runs at the same K and keep the lowest squared-error solution. Random row selection here differs from the K-means++ initialization used in the sklearn example.
+
+## 5b. Image compression: pixels to palette and back
+
+Think of a paint box: the original picture uses thousands of shades. K-means learns a box of **16 representative colors**, then each pixel gets the number of its closest paint. These colors are averages learned in RGB space, not simply the 16 most frequent exact colors.
+
+### One pixel is one sample; RGB are its features
+
+The lab's bird image has shape `(128, 128, 3)`: 128 rows, 128 columns, and three channels in red/green/blue order. `original_img[50, 33]` is a complete RGB row; `original_img[50, 33, 2]` is its blue channel.
+
+Reshape to `(16384, 3)` because 128 × 128 = 16,384 pixels. Each row is one pixel with three color features. This task clusters **pixels by color**, rather than whole images. Pixel row/column positions are not features here. With the default reshape order, flat row p corresponds to image row `p // 128`, column `p % 128`; reshaping back preserves that order.
+
+| Stage | Shape | Meaning |
+| --- | --- | --- |
+| original_img | (128, 128, 3) | Image grid of RGB triplets |
+| X_img | (16384, 3) | One pixel per row |
+| centroids, K=16 | (16, 3) | Palette: one complete RGB color per center |
+| idx | (16384,) | One integer color ID, 0 through 15, per pixel |
+| centroids[idx, :] | (16384, 3) | Replace each ID with its complete palette color |
+| X_recovered | (128, 128, 3) | Those colors restored to the image grid |
+
+### Read centroids[idx, :] one pixel at a time
+
+`idx` holds **centroid/color indices, not distances**. If `idx[0] == 9`, pixel 0 uses palette row 9: `centroids[9, :]`. That row contains all three channel values. The colon means “all feature columns.”
+
+NumPy's [integer advanced indexing](https://numpy.org/doc/stable/user/basics.indexing.html#integer-array-indexing) retrieves rows in the order requested, including repeated IDs:
+
+```python
+import numpy as np
+
+palette_demo = np.array([[1., 0., 0.],     # row 0: red
+                         [0., 1., 0.],     # row 1: green
+                         [0., 0., 1.]])    # row 2: blue
+ids_demo = np.array([2, 0, 2, 1])
+rgb_demo = palette_demo[ids_demo, :]
+np.testing.assert_array_equal(rgb_demo, [[0., 0., 1.],
+                                         [1., 0., 0.],
+                                         [0., 0., 1.],
+                                         [0., 1., 0.]])
+assert rgb_demo.shape == (4, 3)
+tiny_recovered = rgb_demo.reshape(2, 2, 3)
+np.testing.assert_array_equal(tiny_recovered[1, 0], palette_demo[2])
+```
+
+The lookup is equivalent to collecting `centroids[idx[p], :]` for every pixel p. It does not compute distances or averages. That work happened earlier. Repeated index 2 retrieves the same blue triplet twice. Advanced indexing creates a new array of RGB values; it does not pack the indices into a compressed file.
+
+### Run the path on invented image data
+
+This continuation uses the earlier assignment and update helpers. It follows the lab's K=16 and ten-cycle structure, with the reusable helper's explicit empty-group policy. The synthetic image is not the course bird image.
+
+```python
+# Continue sections 4, 5 and 5a.
+# A synthetic RGB gradient; values are already in [0, 1].
+level = np.linspace(0., 1., 128)
+red, green = np.meshgrid(level, level)
+original_img = np.stack([red, green, (red + green) / 2], axis=2)
+X_img = original_img.reshape(-1, 3)
+assert original_img.shape == (128, 128, 3)
+assert X_img.shape == (16384, 3)
+np.testing.assert_array_equal(X_img[50 * 128 + 33], original_img[50, 33])
+
+K = 16
+np.random.seed(7)  # repeatable teaching run; not evidence of a best solution
+image_centroids = kMeans_init_centroids(X_img, K)
+for iteration in range(10):
+    idx_img = find_closest_centroids(X_img, image_centroids)
+    image_centroids = update_centroids(X_img, idx_img, image_centroids)
+idx_img = find_closest_centroids(X_img, image_centroids)  # final centers
+
+X_recovered = image_centroids[idx_img, :]
+assert image_centroids.shape == (16, 3)
+assert idx_img.shape == (16384,)
+assert np.issubdtype(idx_img.dtype, np.integer)
+assert idx_img.min() >= 0 and idx_img.max() < K
+assert X_recovered.shape == (16384, 3)
+X_recovered = X_recovered.reshape(original_img.shape)
+assert X_recovered.shape == (128, 128, 3)
+assert np.unique(X_recovered.reshape(-1, 3), axis=0).shape[0] <= 16
+assert np.mean((original_img - X_recovered) ** 2) > 0  # lossy approximation
+```
+
+For the lab's variable names, the final lookup is `X_recovered = centroids[idx, :]`, followed by `X_recovered = np.reshape(X_recovered, original_img.shape)`. It puts each replacement color back at the original pixel position.
+
+Inspect the loaded image's shape, dtype and range before adapting this to another file. The lab PNG loads with values in [0, 1]; 8-bit integer RGB values in [0, 255] need floating conversion and division by 255 for that convention. Do not divide values that are already normalized, and handle an alpha channel explicitly rather than treating it as RGB.
+
+### Where the theoretical storage saving comes from
+
+Assume 8 bits per RGB channel, a palette stored at that precision, and exactly 4 packed bits per pixel ID:
+
+| Representation | Calculation | Bits |
+| --- | --- | --- |
+| Original raw RGB | 128 × 128 × 3 × 8 | 393,216 |
+| Palette | 16 × 3 × 8 | 384 |
+| Pixel indices | 128 × 128 × 4 | 65,536 |
+| Palette + indices | 384 + 65,536 | 65,920 |
+
+Four bits encode 16 possibilities (0–15). The theoretical ratio is 393216 / 65920 ≈ **5.965**, about **6×**. This compares raw RGB with an ideal palette/index representation, excluding headers and other file-format overhead; it does not measure the size reduction from the original PNG.
+
+The NumPy reconstruction is a full RGB array again, with three values per pixel. NumPy integer IDs also normally occupy more than four bits each, and learned centroids are floating-point values. The lab demonstrates the representation and reconstruction; it does not actually quantize a palette to 8-bit channels, pack two 4-bit indices per byte, or write a compressed image file. An actual encoder must do those storage steps (or use a suitable indexed image format); the measured file size depends on that format.
+
+This is **lossy color approximation**: the original shade is replaced by a nearby palette color, so subtle gradients or details can change. Palette lookup reconstructs the approximated picture exactly from that palette and index map, but cannot recover discarded original shades. Quantizing floating-point centroids to an 8-bit stored palette can add rounding error.
+
 ## 6. Scaling and practical sklearn syntax
 
 Distances depend on coordinate units. Differences of 100 milliseconds and 0.1 in error-rate units contribute 10,000 and 0.01 to squared distance. Converting milliseconds to seconds changes their relative influence.
@@ -561,7 +692,9 @@ Try before reading the answers:
 
 ## Sources and verification
 
-The linked official NumPy, sklearn, Sentence Transformers and Hugging Face references support API and terminology checks. Runnable arrays and telecom applications are teaching examples. The progress table and approximate course centroid output come from the user's continuation handoff; the cached chat contains the accepted update loop and pass report.
+The linked official NumPy, sklearn, Sentence Transformers and Hugging Face references support API and terminology checks. Runnable arrays and telecom applications are teaching examples. The completed-lab status and self-assessment come from the user's handoff and cached chat. The uploaded `Pasted text(7).txt` supplies the full lab, passing outputs, exact centroid values, image shapes and theoretical storage calculation. It was read as reference material; the bird image and course helper files were not supplied for rerunning the course notebook.
+
+**Full-lab follow-up verification, 25 October 2026:** all 14 lesson Python blocks ran in order, including the synthetic 128 × 128 RGB reconstruction with K=16 and ten iterations. Assertions checked pixel order through reshaping, integer palette IDs, full RGB lookup, at most 16 output colors, nonzero lossy reconstruction error, random initialization from existing rows, duplicate-color behavior and the 393,216/65,920 bit calculation. The canonical K-means example ran, all 35 canonical Python blocks passed syntax checks, and new links/anchors, fences and preservation of earlier examples passed. Environment: Python 3.12.14, NumPy 2.5.2, scikit-learn 1.9.1; OMP_NUM_THREADS=1 and LOKY_MAX_CPU_COUNT=1. The full course notebook/grader and an actual packed image encoder were not run. Historical verification records below retain their original scope.
 
 **Exercise follow-up verification, 25 October 2026:** all 11 note Python blocks ran in order with their assertions, including the preserved assignment, update, lifecycle and sklearn examples. Additional checks confirmed the interleaved masks, distinct axis=0/axis=1 outputs, wrong scalar broadcasting, singleton-group index error, first-center ties, the reusable helper's empty-group policy, unchanged old centers, fractional means from integer inputs, and K different from n. The canonical K-means example ran; all 35 canonical blocks passed syntax checks. New relative links/anchors and fences passed, and every earlier Python example was preserved exactly. Environment: Python 3.12.14, NumPy 2.5.2, scikit-learn 1.9.1; OMP_NUM_THREADS=1 and LOKY_MAX_CPU_COUNT=1. Other canonical sections were not runtime-tested again. Course unit-test success is user-confirmed; the course notebook/grader, real embeddings and LLM training were not run here. The earlier verification record below describes the original eight-block note.
 

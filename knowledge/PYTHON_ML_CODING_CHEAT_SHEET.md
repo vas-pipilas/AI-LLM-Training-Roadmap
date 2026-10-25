@@ -469,7 +469,7 @@ assert output.shape == (2, 1)
 assert model.count_params() == 10421  # 10025 + 390 + 16
 ```
 
-`Dense(25)` means **25 output neurons**, each receiving all 400 input features. It computes `activation(X @ W + b)`. `Sequential` passes one layer's output into the next. The same weights serve every image. This untrained model performs forward propagation; it has not learned digit recognition. `get_weights()` inspects parameters, not training progress by itself.
+`Dense(25)` means **25 outputneurons**, each receiving all 400 input features. It computes `activation(X @ W + b)`. `Sequential` passes one layer's output into the next. The same weights serve every image. This untrained model performs forward propagation; it has not learned digit recognition. `get_weights()` inspects parameters, not training progress by itself.
 
 | Layer | Input | Weights | Bias | Output |
 | --- | --- | --- | --- | --- |
@@ -1145,7 +1145,7 @@ Training learns rules; validation chooses settings; an untouched test set evalua
 
 For the slow walkthrough of coordinates, append/argmin, nested loops, updates, convergence, scaling and embedding examples, read [Unsupervised ML and K-means](UNSUPERVISED_LEARNING_AND_KMEANS.md). Keep detailed explanations there.
 
-**Exercise progress, 25 October 2026:** Exercise 1 `find_closest_centroids` completed; Exercise 2 `compute_centroids` passed all unit tests as confirmed by the user. See the [recorded centroid output](UNSUPERVISED_LEARNING_AND_KMEANS.md#completed-k-means-exercises), [Exercise 1 mental gymnastics](UNSUPERVISED_LEARNING_AND_KMEANS.md#exercise-1-mental-gymnastics-counts-vectors-and-identities) and [Exercise 2 mask/mean trace](UNSUPERVISED_LEARNING_AND_KMEANS.md#exercise-2-mental-gymnastics-one-group-all-its-rows).
+**Lab progress, 25 October 2026:** full Andrew Ng K-means clustering lab completed as reported by the user; high-level understanding achieved, with deeper fluency requiring hands-on reuse. Detailed mastery is not claimed. Exercise 1 `find_closest_centroids` completed; Exercise 2 `compute_centroids` passed all unit tests as confirmed by the user. See the [recorded centroid output](UNSUPERVISED_LEARNING_AND_KMEANS.md#completed-k-means-exercises), [Exercise 1 mental gymnastics](UNSUPERVISED_LEARNING_AND_KMEANS.md#exercise-1-mental-gymnastics-counts-vectors-and-identities) and [Exercise 2 mask/mean trace](UNSUPERVISED_LEARNING_AND_KMEANS.md#exercise-2-mental-gymnastics-one-group-all-its-rows).
 
 | Operation | Meaning / shape |
 | --- | --- |
@@ -1183,6 +1183,10 @@ Initialize → assign → average → repeat. K-means minimizes within-group **s
 **Exercise reminders:** `X` and `centroids` are local arrays, not `np.X` or `np.centroids`. Each indexed row is a complete feature vector; features need not be physical coordinates. Subtract before calling norm: its second argument is `ord`, not another point. Reset distances per sample, append inside the center loop, and save argmin after that loop. In Exercise 2, `points = X[idx == i]` is the whole group; average `points`, not `points[i]`. For `(r, n)` points, axis=0 returns n column means. Indexing one row first discards the other samples and its mean is a scalar that can silently broadcast into a centroid. Detailed examples and the [syntax lookup](UNSUPERVISED_LEARNING_AND_KMEANS.md#k-means-syntax-lookup) live in the topic note.
 
 **Pitfalls:** scale numeric measurements when units would dominate distance; save and reuse preparation for new data. Initialization, outliers and noncompact/unequal groups matter. Empty-group means need a policy. For (m, K) distances, omitting argmin's axis chooses one flattened index.
+
+**Image compression lookup:** pixels are samples, RGB are three features: `(128, 128, 3) → reshape(-1, 3) → (16384, 3)`. K=16 gives a `(16, 3)` palette; integer `idx` has shape `(16384,)` and holds color IDs, not distances. `centroids[idx, :]` retrieves one full RGB row per pixel, then `.reshape(original_img.shape)` restores the grid. This is lossy replacement with representative colors. Raw RGB uses 393,216 bits; an ideal 8-bit RGB palette plus packed 4-bit IDs uses 65,920 bits, about 6× smaller. The reconstructed NumPy RGB array is not an actually packed compressed file. See the [low-level palette walkthrough](UNSUPERVISED_LEARNING_AND_KMEANS.md#5b-image-compression-pixels-to-palette-and-back).
+
+**Random initialization:** the lab uses `randidx = np.random.permutation(X.shape[0])`, then `centroids = X[randidx[:K]]`: K complete sample rows, without repeating row indices (duplicate colors can still occur). Run the existing assign/mean cycle; recompute idx against the final centers before lookup. See [random starting rows](UNSUPERVISED_LEARNING_AND_KMEANS.md#5a-random-starting-rows).
 
 **LLM connection:** embed texts → cluster fixed vectors → inspect topics. This does not train the encoder. Self-supervised LLM pretraining derives token targets from text and updates neural weights with a prediction loss. Row L2 normalization and column standardization differ; ordinary K-means on unit embeddings is not automatically spherical/cosine K-means.
 
