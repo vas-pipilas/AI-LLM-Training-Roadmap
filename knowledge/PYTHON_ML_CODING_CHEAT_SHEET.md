@@ -1145,15 +1145,20 @@ Training learns rules; validation chooses settings; an untouched test set evalua
 
 For the slow walkthrough of coordinates, append/argmin, nested loops, updates, convergence, scaling and embedding examples, read [Unsupervised ML and K-means](UNSUPERVISED_LEARNING_AND_KMEANS.md). Keep detailed explanations there.
 
+**Exercise progress, 25 October 2026:** Exercise 1 `find_closest_centroids` completed; Exercise 2 `compute_centroids` passed all unit tests as confirmed by the user. See the [recorded centroid output](UNSUPERVISED_LEARNING_AND_KMEANS.md#completed-k-means-exercises), [Exercise 1 mental gymnastics](UNSUPERVISED_LEARNING_AND_KMEANS.md#exercise-1-mental-gymnastics-counts-vectors-and-identities) and [Exercise 2 mask/mean trace](UNSUPERVISED_LEARNING_AND_KMEANS.md#exercise-2-mental-gymnastics-one-group-all-its-rows).
+
 | Operation | Meaning / shape |
 | --- | --- |
 | X; centers | (m, n); (K, n) |
+| X.shape[0]; X[:, 1] | Integer sample count; second feature column `(m,)` |
 | X[i] - centers[j] | Coordinate differences for one point/center pair: (n,) |
 | np.linalg.norm(X[i] - centers[j]) | One Euclidean distance |
 | distances.append(distance) | Save one scalar; reset list for each sample |
 | np.min([5., 1.5, 4.]) | 1.5: smallest value |
 | np.argmin([5., 1.5, 4.]) | 1: zero-based position of that value |
 | idx[i] = np.argmin(distances) | Store nearest-center ID after all K comparisons |
+| for i in range(K) | Update K centroid rows; here i is a cluster ID |
+| idx[i] == i; idx == i | One Boolean; full `(m,)` Boolean assignment mask |
 | X[idx == j].mean(axis=0) | New center: (n,); handle empty groups first |
 | np.argmin(D2, axis=1) | For (m, K) squared distances, return (m,) IDs |
 
@@ -1174,6 +1179,8 @@ assert model.transform(X).shape == (4, 2)   # distances, not IDs
 ```
 
 Initialize → assign → average → repeat. K-means minimizes within-group **squared** Euclidean error; inertia_ is its sum. Stopping at a tolerance or iteration limit does not guarantee a global optimum. Choose K using geometry, stability and task inspection; inertia alone favors more groups.
+
+**Exercise reminders:** `X` and `centroids` are local arrays, not `np.X` or `np.centroids`. Each indexed row is a complete feature vector; features need not be physical coordinates. Subtract before calling norm: its second argument is `ord`, not another point. Reset distances per sample, append inside the center loop, and save argmin after that loop. In Exercise 2, `points = X[idx == i]` is the whole group; average `points`, not `points[i]`. For `(r, n)` points, axis=0 returns n column means. Indexing one row first discards the other samples and its mean is a scalar that can silently broadcast into a centroid. Detailed examples and the [syntax lookup](UNSUPERVISED_LEARNING_AND_KMEANS.md#k-means-syntax-lookup) live in the topic note.
 
 **Pitfalls:** scale numeric measurements when units would dominate distance; save and reuse preparation for new data. Initialization, outliers and noncompact/unequal groups matter. Empty-group means need a policy. For (m, K) distances, omitting argmin's axis chooses one flattened index.
 
@@ -1202,6 +1209,8 @@ Official API references for checking details and extending examples:
 
 ## 14. How this sheet grows
 
+**K-means exercises follow-up, 25 October 2026:** section 12c now records both completed exercises and links to the specific mistake walkthroughs. All 11 companion-note blocks and this section's example ran; all 35 sheet blocks passed syntax checks. Masks, feature means, scalar broadcasting, singleton groups, ties, empty-group policy, links and preservation checks passed. See the [verification record](UNSUPERVISED_LEARNING_AND_KMEANS.md#sources-and-verification). Exercise 2's course unit-test success is user-confirmed; the course grader was not rerun here.
+
 **Unsupervised ML addition, 25 October 2026:** section 12c adds a compact K-means syntax/concept reference linked to the dedicated study note. All eight note blocks and the new sheet example ran offline; distance/assignment/update, convergence, empty-group/tie and vectorization checks passed. All 35 sheet blocks passed syntax checks; new links/anchors and preservation checks passed. See the [detailed scope and environment](UNSUPERVISED_LEARNING_AND_KMEANS.md#sources-and-verification). Real embeddings, LLM training and course graders were not run.
 
 **Brain-burner follow-up, 21 October 2026:** added a compact gain-selection reminder and a direct troubleshooting link in section 12a. The companion's new selection/weight examples and existing indexing snippet passed runtime checks; all 34 sheet blocks and 14 note blocks passed syntax checks. Relative links/anchors passed, and earlier content was preserved. See the [detailed verification record](DECISION_TREES.md#sources-and-verification) for checks and limits.
@@ -1222,6 +1231,7 @@ Official API references for checking details and extending examples:
 **Addition, 19 October 2026:** added section 12a and the dedicated Decision Trees link. Reviewed against official sklearn APIs; the new Python example was not runtime-tested in this task environment. The 18 October verification record above remains unchanged.
 
 **Lab verification update, 19 October 2026:** the linked Decision Trees note now reproduces the original ungraded lab excerpt supplied in the handoff. Section 12a's sklearn block was runtime-tested offline with Python 3.12.14 and scikit-learn 1.9.1; its shape assertions passed. The earlier verification records above describe the earlier runs and are preserved.
+
 
 
 

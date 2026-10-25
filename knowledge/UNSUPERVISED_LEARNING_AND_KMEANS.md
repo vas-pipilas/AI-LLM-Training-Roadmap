@@ -1,6 +1,25 @@
 # Unsupervised ML and K-means — from coordinates to LLM embeddings
 
-**Study note, 25 October 2026.** Read the tiny examples, run them, and explain each step aloud. This is a study resource, not course completion or a claim of mastery. All data below are invented teaching examples, not a reproduced course lab.
+**Study note, updated 25 October 2026.** Read the tiny examples, run them, and explain each step aloud. This is a study resource, not course completion or a claim of mastery. Runnable arrays below are invented teaching examples. The course progress and approximate output below are recorded separately from the user's handoff.
+
+### Completed K-means exercises
+
+| Andrew Ng ML Specialization exercise | Recorded status |
+| --- | --- |
+| Exercise 1: `find_closest_centroids` | Completed; assignment implementation and walkthrough preserved in section 4. |
+| Exercise 2: `compute_centroids` | Completed; user confirms all unit tests passed. The accepted loop and a full teaching function appear in section 5. |
+
+The handoff reports these approximate Exercise 2 centroids from the screenshot:
+
+| Centroid index | Feature 0 mean | Feature 1 mean |
+| --- | --- | --- |
+| 0 | 2.42830111 | 3.15792418 |
+| 1 | 5.81350331 | 2.6365645 |
+| 2 | 7.11938687 | 3.6166844 |
+
+This is a `(3, 2)` result: three groups, two feature means per group. It records one course update result, not proof that the entire K-means lifecycle or specialization is complete. The course data and grader were not rerun for this documentation update.
+
+Start with [Exercise 1 mistakes](#exercise-1-mental-gymnastics-counts-vectors-and-identities), [Exercise 2 masks and means](#exercise-2-mental-gymnastics-one-group-all-its-rows), or the [syntax lookup](#k-means-syntax-lookup).
 
 For syntax lookup, use the [canonical Python ML coding cheat sheet](PYTHON_ML_CODING_CHEAT_SHEET.md#12c-unsupervised-learning-and-k-means). For array basics, see [NumPy for ML](NUMPY_FOR_ML.md).
 
@@ -167,6 +186,41 @@ The inserted size-one axes let every row meet every center. Summing axis 2 remov
 
 This version allocates an (m, K, n) intermediate. It teaches broadcasting but can be too large for an embedding collection; use library implementations for practical scale.
 
+### Exercise 1 mental gymnastics: counts, vectors and identities
+
+The mistakes in the continuation handoff mix three different questions: **how many rows**, **which row**, and **which center won**. Write the role next to each variable before writing more code.
+
+| Attempt / confusion | What it actually means | Correct pattern |
+| --- | --- | --- |
+| Use `X[:, 1]` as the sample count | An array containing feature 1 for every row | `m = X.shape[0]`, an integer count |
+| Read `X[i]` as only an x coordinate, `centroids[j]` as a y coordinate | Each expression is a whole feature vector | Subtract matching features: `X[i] - centroids[j]` |
+| Write `np.X` or `np.centroids` | Look for attributes named X/centroids in the NumPy module | Use local variables `X`, `centroids`; use `np` for functions such as `np.mean` |
+| `np.linalg.norm(X[i], centroids[j])` | The second argument is the norm-order option `ord`, not a second point | `np.linalg.norm(X[i] - centroids[j])` |
+| Save the smallest distance into `idx[i]` | Save a measurement where a group identity is required | `idx[i] = np.argmin(distances)` |
+| Use `np.min` to choose the center ID | Return the smallest value | `np.argmin` returns its zero-based position |
+
+For `X = [[2, 4], [4, 8], [10, 20]]`, `X.shape` is `(3, 2)`, `X.shape[0]` is `3`, and `X[:, 1]` is `[4, 8, 20]`. `range` needs the count 3; that column is data, not a count. Meanwhile `X[0]` is `[2, 4]`: both features of sample 0.
+
+Coordinates here mean positions in **feature space**, not necessarily physical map coordinates. A row could contain call duration and packet-loss rate, or hundreds of learned embedding components. `i` selects the sample; `j` selects the centroid. Neither variable singles out a feature in `X[i] - centroids[j]`.
+
+For point `[1, 1]` and center `[4, 5]`, subtract first: `[-3, -4]`. Its norm is 5. Passing the two vectors as two arguments does not ask NumPy for that distance. See the [norm signature](https://numpy.org/doc/stable/reference/generated/numpy.linalg.norm.html).
+
+#### Follow one outer-loop iteration
+
+Suppose the three center distances for sample i are `[5, 1.5, 4]`:
+
+| Moment | `j` | `distances` after append | Next action |
+| --- | --- | --- | --- |
+| Start sample i | — | `[]` | Compare center 0 |
+| First comparison | 0 | `[5]` | Compare center 1 |
+| Second comparison | 1 | `[5, 1.5]` | Compare center 2 |
+| Third comparison | 2 | `[5, 1.5, 4]` | Exit inner loop |
+| Choose once for sample i | — | `[5, 1.5, 4]` | Save `idx[i] = 1` |
+
+The center ID is 1 because the winning value sits at position 1. A distance of 1.5 is not a valid center index. Even if the distance happened to be an integer, it would still have the wrong meaning.
+
+Indentation controls when the actions happen. Resetting `distances` inside the inner loop erases earlier comparisons; resetting it outside the outer loop mixes samples. Appending after the inner loop saves only the last distance. Choosing with argmin inside the inner loop repeatedly chooses from an unfinished list. Use the section 4 function: reset once per sample, append once per center, choose once after all centers. `return idx` belongs after both loops so every sample is processed.
+
 ## 5. Update the centers and repeat
 
 Average each group's assigned rows **column by column**:
@@ -195,6 +249,113 @@ assert updated.shape == (2, 2)
 idx == j creates one Boolean per sample. X[idx == j] selects the matching rows. mean(axis=0) averages across those rows and returns n feature means. Calling mean() without an axis collapses everything into one scalar.
 
 An empty group's mean is invalid, so handle it explicitly. Keeping the old center is a simple teaching policy that may leave a group empty; it does not reproduce sklearn's internal empty-center handling. Production implementations can relocate empty centers. Floating-point centers also prevent integer arrays from truncating values such as 1.5.
+
+### Exercise 2 mental gymnastics: one group, all its rows
+
+The accepted exercise body was:
+
+```python
+# Body inside compute_centroids, after allocating centroids with shape (K, n).
+# Continue section 2's X, idx and K for this runnable illustration.
+centroids_for_exercise = np.zeros((K, X.shape[1]))
+for i in range(K):
+    points = X[idx == i]
+    centroids_for_exercise[i] = np.mean(points, axis=0)
+np.testing.assert_allclose(centroids_for_exercise, [[1.5, 1.], [8.5, 8.]])
+```
+
+In the submitted loop the destination was named `centroids[i]`. The example uses `centroids_for_exercise[i]` to preserve the earlier initial centers for the lifecycle demonstration below. The three operations are exactly the same: **visit a group → collect every member → save its feature means**.
+
+Exercise 1's outer loop visits **m samples**. Exercise 2's loop visits **K centroid slots**. Here `i` means a cluster ID; in Exercise 1 it meant a sample row ID. Python does not give the letter i a permanent meaning. Renaming it `cluster_id` can make the second job easier to read. The Boolean mask already checks all m assignments, so Exercise 2 needs no explicit inner sample loop.
+
+#### Tiny data with interleaved groups
+
+Use five rows and three groups so m, K and n are visibly different:
+
+| Original row ID | Feature 0 | Feature 1 | `idx[row_id]` |
+| --- | --- | --- | --- |
+| 0 | 2 | 4 | 0 |
+| 1 | 10 | 20 | 1 |
+| 2 | 4 | 8 | 0 |
+| 3 | 14 | 28 | 1 |
+| 4 | 30 | 60 | 2 |
+
+Think of idx as a group sticker attached to each row. To update basket 0, inspect **every sticker** and keep all rows with sticker 0. Do not inspect only sticker position 0.
+
+For `i = 0`, `idx[i] == i` asks only “is the sticker on row 0 equal to 0?” It returns one Boolean, True. `idx == i` asks that question for every sticker: `[True, False, True, False, False]`. For `i = 1`, the single check is also True but still says nothing about row 3. For `i = 2`, the single check is False even though row 4 belongs to cluster 2. Row positions and cluster IDs serve different jobs.
+
+`X[idx == i]` applies that full mask to X's rows. True means keep the whole row, including all n features; False means skip it. It does not change X. See [NumPy Boolean indexing](https://numpy.org/doc/stable/user/basics.indexing.html#boolean-array-indexing).
+
+```python
+import numpy as np
+
+X_demo = np.array([[2., 4.], [10., 20.], [4., 8.],
+                   [14., 28.], [30., 60.]])
+idx_demo = np.array([0, 1, 0, 1, 2])
+i = 0
+mask_demo = idx_demo == i
+points_demo = X_demo[mask_demo]
+assert X_demo.shape == (5, 2)
+assert bool(idx_demo[i] == i) is True       # one entry checked
+np.testing.assert_array_equal(mask_demo, [True, False, True, False, False])
+np.testing.assert_array_equal(points_demo, [[2., 4.], [4., 8.]])
+assert points_demo.shape == (2, 2)
+np.testing.assert_allclose(np.mean(points_demo, axis=0), [3., 6.])
+```
+
+Do not replace the array mask with `X[idx[i] == i]`. A scalar Boolean is not an m-entry row selector; NumPy's scalar-Boolean indexing has different shape behavior. Build the full mask `idx == i`.
+
+#### The extra `[i]` throws away the group
+
+After selection, `points` already contains the rows needed for **this** centroid. `points[i]` selects just one row within that smaller array. Its indices are local positions in the selection; the cluster ID i is not a row position inside it.
+
+For cluster 0, `points = [[2, 4], [4, 8]]`. The correct calculation is two separate column means: `(2 + 4) / 2 = 3` and `(4 + 8) / 2 = 6`. The new center is `[3, 6]`.
+
+| Expression on those points | Result | What survived? |
+| --- | --- | --- |
+| `points` | `[[2, 4], [4, 8]]`, shape `(2, 2)` | Both samples and both features |
+| `points[0]` | `[2, 4]`, shape `(2,)` | Only the first sample |
+| `np.mean(points, axis=0)` | `[3, 6]`, shape `(2,)` | One mean for each feature |
+| `np.mean(points[0], axis=0)` | `3.0`, scalar | An average of two features from one sample |
+| `np.mean(points, axis=1)` | `[3, 6]`, shape `(2,)` | One mean per sample; accidental numeric match here |
+| `np.mean(points)` | `4.5`, scalar | All samples and features collapsed together |
+
+The accidental match in the axis=1 row is why checking one result is not enough. For cluster 1, `points = [[10, 20], [14, 28]]`: axis=0 returns `[12, 24]`, while axis=1 returns `[15, 21]`.
+
+**Read `axis=0` as “combine the rows, keep the feature columns.”** For shape `(r, n)`, it removes the r dimension and returns n values. Read `axis=1` as “combine the feature columns inside each row,” leaving r values. With `points[i]` the array is already 1-D; its axis 0 now spans feature entries, so averaging it produces a scalar. Adding axis=0 cannot restore the samples discarded by `[i]`. The [mean documentation](https://numpy.org/doc/stable/reference/generated/numpy.mean.html) defines this axis reduction.
+
+Assigning that incorrect scalar to `centroids[i]` can silently broadcast it across all n feature slots. For cluster 0, the wrong calculation would fill `[3, 3]`, not `[3, 6]`. For cluster 2, `points` has one row, so `points[2]` would raise an index error. A cluster ID can be larger than its number of members.
+
+#### Trace the whole update
+
+| Loop i | `idx == i` | Selected original rows | `points.shape` | Mean saved into `centroids[i]` |
+| --- | --- | --- | --- | --- |
+| 0 | `[T, F, T, F, F]` | 0, 2 | `(2, 2)` | `[3, 6]` |
+| 1 | `[F, T, F, T, F]` | 1, 3 | `(2, 2)` | `[12, 24]` |
+| 2 | `[F, F, F, F, T]` | 4 | `(1, 2)` | `[30, 60]` |
+
+idx stays fixed during this update. It came from the assignment step. The next assignment step may change those stickers after the centers move.
+
+Here is the full exercise-style function, under the **nonempty-cluster assumption**:
+
+```python
+import numpy as np
+
+def compute_centroids(X, idx, K):
+    m, n = X.shape
+    centroids = np.zeros((K, n))  # floating output preserves fractional means
+    for i in range(K):          # i is a centroid index in THIS function
+        points = X[idx == i]    # all assigned rows, shape (r, n)
+        centroids[i] = np.mean(points, axis=0)  # shape (n,)
+    return centroids
+
+# Continue the independent five-row demo above.
+result_demo = compute_centroids(X_demo, idx_demo, 3)
+np.testing.assert_allclose(result_demo, [[3., 6.], [12., 24.], [30., 60.]])
+assert result_demo.shape == (3, 2)
+```
+
+**Empty cluster caveat:** if no assignments equal i, points has shape `(0, n)`. Its mean produces invalid values (NaNs with warnings). The exercise-style function above does not handle that case. For reusable code, use the earlier `update_centroids` helper and its explicit keep-old-center policy, or choose a documented reinitialization policy. The three-argument exercise function has no old centers to keep. A valid single-member group has shape `(1, n)` and its mean is that one complete row.
 
 ### The complete cycle
 
@@ -367,7 +528,25 @@ A pretrained model may create embeddings before K-means runs. K-means then learn
 | Does convergence prove the topics are correct? | No; numerical stability does not validate meaning. |
 | Is this how LLMs learn language? | Clustering groups vectors; pretraining learns predictions. |
 
-The retrieved chat preserves the append/argmin discussion and the request to explain it “like I am 5.” The other questions are teaching prompts, not claims about unseen conversation turns.
+The original retrieved chat preserved the append/argmin discussion and the request to explain it “like I am 5.” The continuation handoff supplies the specific Exercise 1 and Exercise 2 mistakes documented above. The cached conversation also preserves the accepted three-line update loop and the user's report that it passed. Other self-check questions are teaching prompts.
+
+### K-means syntax lookup
+
+| Need | Syntax | Result / reminder |
+| --- | --- | --- |
+| Count samples and features | `m, n = X.shape` | Two integers |
+| Read second feature for all rows | `X[:, 1]` | m values; not a count |
+| Read one whole sample / center | `X[row_id]`; `centroids[cluster_id]` | n values each |
+| One distance | `np.linalg.norm(X[row_id] - centroids[cluster_id])` | Scalar |
+| Save a candidate distance | `distances.append(distance)` | Inside center loop |
+| Choose the closest identity | `idx[row_id] = np.argmin(distances)` | After center loop |
+| Visit centroid slots | `for i in range(K):` | K updates, not m |
+| Compare every assignment | `idx == i` | m Booleans |
+| Collect a whole group | `points = X[idx == i]` | `(r, n)`, r selected rows |
+| Average each feature | `np.mean(points, axis=0)` | n values; check r > 0 |
+| Save one complete center | `centroids[i] = np.mean(points, axis=0)` | Updates one `(n,)` row |
+
+Read the Exercise 2 sentence aloud: **For each cluster ID, take every row with that ID, average each feature column, and store the resulting vector in that cluster's centroid row.**
 
 Try before reading the answers:
 
@@ -382,9 +561,12 @@ Try before reading the answers:
 
 ## Sources and verification
 
-The linked official NumPy, sklearn, Sentence Transformers and Hugging Face references support API and terminology checks. Coordinates, loops and telecom applications here are teaching examples, not reported course or production results.
+The linked official NumPy, sklearn, Sentence Transformers and Hugging Face references support API and terminology checks. Runnable arrays and telecom applications are teaching examples. The progress table and approximate course centroid output come from the user's continuation handoff; the cached chat contains the accepted update loop and pass report.
+
+**Exercise follow-up verification, 25 October 2026:** all 11 note Python blocks ran in order with their assertions, including the preserved assignment, update, lifecycle and sklearn examples. Additional checks confirmed the interleaved masks, distinct axis=0/axis=1 outputs, wrong scalar broadcasting, singleton-group index error, first-center ties, the reusable helper's empty-group policy, unchanged old centers, fractional means from integer inputs, and K different from n. The canonical K-means example ran; all 35 canonical blocks passed syntax checks. New relative links/anchors and fences passed, and every earlier Python example was preserved exactly. Environment: Python 3.12.14, NumPy 2.5.2, scikit-learn 1.9.1; OMP_NUM_THREADS=1 and LOKY_MAX_CPU_COUNT=1. Other canonical sections were not runtime-tested again. Course unit-test success is user-confirmed; the course notebook/grader, real embeddings and LLM training were not run here. The earlier verification record below describes the original eight-block note.
 
 **Verified 25 October 2026:** all eight Python blocks ran offline in their stated order, including the three explicitly marked continuation sections. Assertions checked coordinates, shapes, distances, min/argmin, exact assignments, center updates, the two-cycle SSE history, sklearn fit/predict/transform and the two expected synthetic text groups (allowing arbitrary ID order). Additional checks covered first-index ties, an empty group, floating means from integer centers, preservation of input centers, K different from n, loop/vectorized parity and nonincreasing SSE over 30 cycles on generated 3-D data.
 
 The canonical sheet's new section also ran; all 35 sheet Python blocks passed syntax checks, with existing content preserved. New relative links/anchors and fences passed. Environment: Python 3.12.14, NumPy 2.5.2, scikit-learn 1.9.1. Windows core-count/MKL warnings appeared on the first run; the final check used OMP_NUM_THREADS=1 and LOKY_MAX_CPU_COUNT=1. Existing sheet sections were syntax-checked, not all runtime-tested again. Real embedding generation, language-model training and any course grader were not run.
+
 

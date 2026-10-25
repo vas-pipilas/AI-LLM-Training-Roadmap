@@ -118,6 +118,18 @@ The LLM connection is text → embeddings → clustering → inspect groups. Clu
 
 Verification: eight note blocks and the new canonical example ran offline; numerical, shape, loop/vectorized parity, empty-group, tie and objective checks passed. All 35 canonical blocks passed syntax checks; new links/anchors and preservation checks passed. See the note's [verification record](knowledge/UNSUPERVISED_LEARNING_AND_KMEANS.md#sources-and-verification) for versions and limits. Real embedding generation, LLM training and the course grader were not run.
 
+### 25 October 2026 — K-means Exercises 1 and 2 completed
+
+Recorded completion of Exercise 1 `find_closest_centroids` and the user's confirmation that Exercise 2 `compute_centroids` passed all unit tests. The handoff's approximate three-center output is saved in the [existing K-means note](knowledge/UNSUPERVISED_LEARNING_AND_KMEANS.md#completed-k-means-exercises). This is exercise progress, not specialization completion; this documentation task did not rerun the course grader.
+
+The mental gymnastics worth remembering: `X.shape[0]` counts rows while `X[:, 1]` reads a column. `X[i]` and `centroids[j]` are whole feature vectors. NumPy supplies functions, so use `X` rather than `np.X`, and pass their difference to `np.linalg.norm`. Save argmin's centroid ID, not min's distance. Indentation schedules the work: reset once per sample, append once per center, choose after all comparisons.
+
+For Exercise 2, i now selects a centroid slot, so loop over K. `idx[i] == i` checks only one assignment; `idx == i` checks all m assignments. `X[idx == i]` keeps every assigned row. The extra `[i]` in `np.mean(points[i], axis=0)` throws away the rest of the group; average `points` directly, column by column, to keep n feature means. The note uses interleaved groups, full masks, a step-by-step trace, and scalar-broadcast and index-error examples to make this visible. Empty clusters still require an explicit policy.
+
+The [same canonical cheat sheet](knowledge/PYTHON_ML_CODING_CHEAT_SHEET.md#12c-unsupervised-learning-and-k-means) contains concise reminders and links to the detailed walkthrough. The existing assign/update lifecycle, ML engineering uses, embedding-clustering examples and distinction from self-supervised LLM pretraining remain in place.
+
+Verification for this follow-up: all 11 note blocks and the canonical K-means example ran offline with numerical/shape assertions; all 35 canonical blocks passed syntax checks. Specific mask, axis, scalar-broadcast, singleton, tie, empty-group and K-versus-n checks passed, as did new links/anchors and preservation of all earlier code examples. See the note's verification record for environment and scope.
+
 ## Concepts to revisit
 
 Add entries here as they appear during training. A useful entry answers three questions:
@@ -139,5 +151,6 @@ Keep unresolved questions here instead of pretending they are understood. Once a
 ## Interesting side trails
 
 AI changes quickly and interesting topics will appear before their scheduled phase. Record them here rather than derailing the main roadmap. We can decide later whether they deserve a small experiment or should wait.
+
 
 
