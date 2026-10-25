@@ -25,6 +25,7 @@
 | Quick lookup | [12. Debugging and copy recipes](#12-debugging-and-copy-recipes) | Common mistakes and tiny reusable checks |
 | Beginner → intermediate | [12a. Decision trees](#12a-decision-trees--concise-syntax) | Current-node IDs, entropy/splitting pitfalls; fit/predict and growth controls |
 | Beginner → intermediate | [12b. Trees Ensemble lab](#12b-trees-ensemble-lab--pandas-forests-and-xgboost) | pandas encoding, tuning loops, random forest, XGBoost early stopping |
+| Beginner → intermediate | [12c. Unsupervised learning and K-means](#12c-unsupervised-learning-and-k-means) | Coordinates, min/argmin, clustering syntax and LLM distinction |
 | Reference | [13. Related notes and API sources](#13-related-notes-and-api-sources) | Deeper explanations and official docs |
 | Maintenance | [14. How this sheet grows](#14-how-this-sheet-grows) | Update policy and verification record |
 
@@ -1138,6 +1139,46 @@ assert (
 
 Training learns rules; validation chooses settings; an untouched test set evaluates the frozen procedure. The lab's 184 rows are **validation**, even where its print label says “test.” Repeated model/hyperparameter selection can overfit them. GridSearchCV also needs a separate final test set. The detailed note provides a runnable `Pipeline + ColumnTransformer + OneHotEncoder(handle_unknown="ignore")` search: encoding is fitted only on each training fold, and unseen categories are handled consistently. This is stronger real-world practice than `get_dummies` before splitting; fixed-category encoding alone is **not proof of target leakage**. See [sklearn's leakage guidance](https://scikit-learn.org/stable/common_pitfalls.html#data-leakage).
 
+## 12c. Unsupervised learning and K-means
+
+**Concept:** clustering fits groups without supplied class labels. K counts groups; n counts features. Each row is a point, each feature is a coordinate. A centroid is a mean position, not necessarily a data row. Cluster IDs are arbitrary, not probabilities or known topic names.
+
+For the slow walkthrough of coordinates, append/argmin, nested loops, updates, convergence, scaling and embedding examples, read [Unsupervised ML and K-means](UNSUPERVISED_LEARNING_AND_KMEANS.md). Keep detailed explanations there.
+
+| Operation | Meaning / shape |
+| --- | --- |
+| X; centers | (m, n); (K, n) |
+| X[i] - centers[j] | Coordinate differences for one point/center pair: (n,) |
+| np.linalg.norm(X[i] - centers[j]) | One Euclidean distance |
+| distances.append(distance) | Save one scalar; reset list for each sample |
+| np.min([5., 1.5, 4.]) | 1.5: smallest value |
+| np.argmin([5., 1.5, 4.]) | 1: zero-based position of that value |
+| idx[i] = np.argmin(distances) | Store nearest-center ID after all K comparisons |
+| X[idx == j].mean(axis=0) | New center: (n,); handle empty groups first |
+| np.argmin(D2, axis=1) | For (m, K) squared distances, return (m,) IDs |
+
+```python
+import numpy as np
+from sklearn.cluster import KMeans
+
+X = np.array([[1., 1.], [2., 1.], [8., 8.], [9., 8.]])
+model = KMeans(n_clusters=2, init="k-means++",
+               n_init=10, random_state=42)
+idx = model.fit_predict(X)                 # no y required
+assert idx.shape == (4,)
+assert idx[0] == idx[1] and idx[2] == idx[3]
+assert idx[0] != idx[2]                     # numeric IDs can swap
+assert model.cluster_centers_.shape == (2, 2)
+assert model.predict([[1.5, 1.]]).shape == (1,)
+assert model.transform(X).shape == (4, 2)   # distances, not IDs
+```
+
+Initialize → assign → average → repeat. K-means minimizes within-group **squared** Euclidean error; inertia_ is its sum. Stopping at a tolerance or iteration limit does not guarantee a global optimum. Choose K using geometry, stability and task inspection; inertia alone favors more groups.
+
+**Pitfalls:** scale numeric measurements when units would dominate distance; save and reuse preparation for new data. Initialization, outliers and noncompact/unequal groups matter. Empty-group means need a policy. For (m, K) distances, omitting argmin's axis chooses one flattened index.
+
+**LLM connection:** embed texts → cluster fixed vectors → inspect topics. This does not train the encoder. Self-supervised LLM pretraining derives token targets from text and updates neural weights with a prediction loss. Row L2 normalization and column standardization differ; ordinary K-means on unit embeddings is not automatically spherical/cosine K-means.
+
 ## 13. Related notes and API sources
 
 The focused notes remain useful; this page adds one canonical syntax entry point rather than replacing them:
@@ -1161,6 +1202,8 @@ Official API references for checking details and extending examples:
 
 ## 14. How this sheet grows
 
+**Unsupervised ML addition, 25 October 2026:** section 12c adds a compact K-means syntax/concept reference linked to the dedicated study note. All eight note blocks and the new sheet example ran offline; distance/assignment/update, convergence, empty-group/tie and vectorization checks passed. All 35 sheet blocks passed syntax checks; new links/anchors and preservation checks passed. See the [detailed scope and environment](UNSUPERVISED_LEARNING_AND_KMEANS.md#sources-and-verification). Real embeddings, LLM training and course graders were not run.
+
 **Brain-burner follow-up, 21 October 2026:** added a compact gain-selection reminder and a direct troubleshooting link in section 12a. The companion's new selection/weight examples and existing indexing snippet passed runtime checks; all 34 sheet blocks and 14 note blocks passed syntax checks. Relative links/anchors passed, and earlier content was preserved. See the [detailed verification record](DECISION_TREES.md#sources-and-verification) for checks and limits.
 
 **Graded decision-tree addition, 21 October 2026:** added the current-node ID reminder and direct link to section 4a of the detailed note. Ran the new indexing snippet and both companion snippets with exact output/assertion checks, re-ran the existing section 4 helpers, syntax-checked all 34 sheet blocks and 13 note blocks, and verified new links/fences. Python 3.12.14, NumPy 2.3.5. The course grader was not run; see the [detailed verification record](DECISION_TREES.md#sources-and-verification) for scope. Earlier records are preserved.
@@ -1179,5 +1222,6 @@ Official API references for checking details and extending examples:
 **Addition, 19 October 2026:** added section 12a and the dedicated Decision Trees link. Reviewed against official sklearn APIs; the new Python example was not runtime-tested in this task environment. The 18 October verification record above remains unchanged.
 
 **Lab verification update, 19 October 2026:** the linked Decision Trees note now reproduces the original ungraded lab excerpt supplied in the handoff. Section 12a's sklearn block was runtime-tested offline with Python 3.12.14 and scikit-learn 1.9.1; its shape assertions passed. The earlier verification records above describe the earlier runs and are preserved.
+
 
 

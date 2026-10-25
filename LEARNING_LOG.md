@@ -108,6 +108,16 @@ The reminders to revisit: y=1 is a class label, not a correct prediction; p_1 me
 Added a corrected selection loop, worked gains, common error/correct patterns, self-checks and a concise lookup table. Verification covered exact walkthrough outputs, gain tracking, ties, zero gain, boundary cases, syntax and relative links/anchors; see the [scope and results](knowledge/DECISION_TREES.md#sources-and-verification). This is a study-note update, not course completion or a course-grader result.
 
 
+### 25 October 2026 — Unsupervised ML and K-means reference
+
+Added a [detailed study note](knowledge/UNSUPERVISED_LEARNING_AND_KMEANS.md) and a concise section in the [same canonical cheat sheet](knowledge/PYTHON_ML_CODING_CHEAT_SHEET.md#12c-unsupervised-learning-and-k-means). This records a study resource, not course completion or mastery.
+
+The reminders to revisit: a sample is one row, features are its coordinates, and a centroid is an average location with the same feature count. The outer loop chooses a sample; the inner loop compares every center. Reset distances for each sample; append saves one scalar. With distances [5, 1.5, 4], min is 1.5 but argmin is 1, the zero-based center ID. A center coordinate of 1.5 has a different role. Assignment and column-wise mean updates repeat until a stopping rule or iteration cap; convergence does not guarantee the best or most meaningful groups.
+
+The LLM connection is text → embeddings → clustering → inspect groups. Clustering fixed vectors does not train the encoder. Self-supervised pretraining constructs token targets from text and updates neural weights. The guide distinguishes feature scaling from row normalization and ordinary K-means from spherical K-means.
+
+Verification: eight note blocks and the new canonical example ran offline; numerical, shape, loop/vectorized parity, empty-group, tie and objective checks passed. All 35 canonical blocks passed syntax checks; new links/anchors and preservation checks passed. See the note's [verification record](knowledge/UNSUPERVISED_LEARNING_AND_KMEANS.md#sources-and-verification) for versions and limits. Real embedding generation, LLM training and the course grader were not run.
+
 ## Concepts to revisit
 
 Add entries here as they appear during training. A useful entry answers three questions:
@@ -129,4 +139,5 @@ Keep unresolved questions here instead of pretending they are understood. Once a
 ## Interesting side trails
 
 AI changes quickly and interesting topics will appear before their scheduled phase. Record them here rather than derailing the main roadmap. We can decide later whether they deserve a small experiment or should wait.
+
 
