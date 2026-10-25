@@ -150,6 +150,16 @@ The mistake to remember: X[0] contains the first row's values; X.shape[0] counts
 
 Verification: all 38 canonical Python blocks passed syntax checks, all 11 NumPy blocks in sections 2–4 ran with assertions, all earlier examples were preserved, and new canonical anchors, fences and whitespace passed. Python 3.12.14, NumPy 2.3.5. Other sections and course graders were not runtime-tested again. This records a reference update, not new course completion or mastery.
 
+### 25 October 2026 — Complete anomaly-detection lab, purpose before syntax
+
+Documented every section of the uploaded `Pasted text(8).txt` in [Anomaly Detection](knowledge/ANOMALY_DETECTION.md), with reusable additions in the [canonical sheet](knowledge/PYTHON_ML_CODING_CHEAT_SHEET.md#12d-anomaly-detection) and a bridge from [NumPy for ML](knowledge/NUMPY_FOR_ML.md#18-anomaly-detection-density-to-boolean-masks-to-f1).
+
+What was hard: code pieces arrived before their purpose. TP/FP/FN feed precision and recall; F1 combines those to grade a candidate epsilon; comparing candidate grades chooses the cutoff. Understanding means tracing how changing epsilon changes predictions and mistakes, not only recalling the formulas. The guide adds smoke-alarm analogies, hand calculations, shape diagrams, formulas by symbol, both full exercise functions, plotting masks, glossary and common mistakes.
+
+Observed in the uploaded output: mu `[14.11222578,14.99771051]`, var `[1.83263141,1.70974533]`; 2D epsilon `8.990853e-05`, F1 `0.875000`, both exercise test outputs passed. Eleven-feature shapes `(1000,11)`, `(100,11)`, `(100,)`; epsilon `1.377229e-18`, validation F1 `0.615385`, and 117 flagged training examples. These outputs were transcribed, not independently reproduced. Density is not event probability; F1 is not accuracy; feature-wise Gaussian independence is an assumption. All explanations are external to the notebook; non-graded cells remain unchanged.
+
+Verification: seven teaching fixtures and extra metric/shape/grid checks passed; all 78 Python blocks across the five edited documents passed syntax checks; both exercise bodies match the upload structurally; 74 links into edited local documents passed. Python 3.12.14 / NumPy 2.3.5. Course data/helpers/grader and unrelated runtime examples were not rerun. See the [scope record](knowledge/ANOMALY_DETECTION.md#sources-and-verification).
+
 ## Concepts to revisit
 
 Add entries here as they appear during training. A useful entry answers three questions:
@@ -171,6 +181,7 @@ Keep unresolved questions here instead of pretending they are understood. Once a
 ## Interesting side trails
 
 AI changes quickly and interesting topics will appear before their scheduled phase. Record them here rather than derailing the main roadmap. We can decide later whether they deserve a small experiment or should wait.
+
 
 
 

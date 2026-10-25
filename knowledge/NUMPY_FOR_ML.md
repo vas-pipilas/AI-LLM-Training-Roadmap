@@ -440,6 +440,16 @@ network → sigmoid output → threshold → class
 
 Do not confuse the continuous sigmoid output with the final 0/1 decision.
 
+## 18. Anomaly detection: density to Boolean masks to F1
+
+For the reusable example, syntax table and pitfalls, use the [canonical anomaly section](PYTHON_ML_CODING_CHEAT_SHEET.md#12d-anomaly-detection), especially [Boolean counting and guarded division](PYTHON_ML_CODING_CHEAT_SHEET.md#boolean-counting-and-guarded-division). The [full lab guide](ANOMALY_DETECTION.md) covers every uploaded lab section and the actual recorded results. Keep the full functions and detailed formulas there once.
+
+The connection I was missing: **epsilon sets an alarm rule → compare decisions with y_val → TP/FP/FN → precision/recall → F1 grades epsilon**. The outer loop retains the best validation F1. It does not train new means/variances for each cutoff.
+
+Shape path: training `(m,n)` reduces over `axis=0` to means/variances `(n,)`; broadcasting applies them to validation `(m_val,n)`; multiplying per-feature densities over `axis=1` produces scores `(m_val,)`; `< epsilon` produces a Boolean array of the same shape. Label masks must also be `(m_val,)`. `np.sum` counts matching True entries. The scalar cutoff broadcasts; the threshold loop remains a Python loop even though each candidate's decisions/counts are vectorized.
+
+This is a low-density rule, `p_val < epsilon`: density is not a probability that an example is normal, and F1 is not accuracy. The Gaussian assumes independent features. Use `&` with parenthesized array comparisons, keep `prediction` naming consistent, and guard all metric denominators. `X[outliers,0]` selects the first coordinate only for flagged rows; use scores and rows from the same dataset. See the canonical section for `np.arange` steps, tie behavior and the `(m,)` versus `(m,1)` trap.
+
 ---
 
 # NumPy 60-second reference
@@ -472,3 +482,4 @@ column = x.reshape(-1, 1)
 ```
 
 If confused: **print the shape first.**
+
