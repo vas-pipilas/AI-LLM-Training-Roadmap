@@ -13,7 +13,7 @@
 | Start | [0. Run the examples](#0-run-the-examples) | Environment, notation, dependencies |
 | Beginner | [1. Python essentials](#1-python-essentials) | Lists/dicts, loops, functions, unpacking, f-strings |
 | Beginner | [2. NumPy creation and shapes](#2-numpy-creation-and-shapes) | Arrays, dtypes, rows, columns, reshape |
-| Beginner | [3. NumPy selection and axes](#3-numpy-selection-and-axes) | Indexing, slicing, masks, statistics |
+| Beginner | [3. NumPy selection and axes](#3-numpy-selection-and-axes) | Indexing, masks, manual mean, population variance; [quick lookup](#numpy-for-the-specialization-quick-lookup) |
 | Beginner → intermediate | [4. NumPy ML calculations](#4-numpy-ml-calculations) | Broadcasting, vectorization, matmul, stability |
 | Beginner | [5. Matplotlib pyplot](#5-matplotlib-pyplot) | Scatter, lines, histograms, subplots, export |
 | Beginner | [6. TensorFlow and Keras foundations](#6-tensorflow-and-keras-foundations) | Tensors, Dense, Sequential, shapes |
@@ -179,6 +179,25 @@ print([1, 2] * 2, np.array([1, 2]) * 2)  # [1,2,1,2] versus [2 4]
 
 `np.asarray` accepts an existing array or sequence and may reuse array storage. `astype(np.float32)` converts a dtype and usually allocates a new array. Integer arrays cannot safely hold arbitrary fractions; specify float when computing gradients or normalized data. Avoid `np.empty` until needed: it contains uninitialized values, not zeros.
 
+### Count rows versus select a row
+
+`np` is the NumPy module alias; `X` is an array variable I created. Call `np.array(...)` or `np.mean(X, axis=0)`; inspect `X.shape` or select `X[0]`. Writing `np.X` asks for a module attribute named X and does not access my variable.
+
+```python
+import numpy as np
+
+X = np.array([[1., 2.], [3., 4.], [5., 6.]])
+m, n = X.shape                 # unpack (3, 2): m rows, n features
+assert X.shape == (3, 2)
+assert X.shape[0] == m == 3     # integer COUNT
+assert X.shape[1] == n == 2
+np.testing.assert_array_equal(X[0], [1., 2.])  # first row's VALUES
+assert X[0].shape == (2,)
+assert list(range(m)) == [0, 1, 2]
+```
+
+`X[0]` is the first sample, not the row count. Even `len(X[0])` is the feature count for this 2-D matrix. `for i in range X[0]:` has invalid syntax. Use `for i in range(X.shape[0]):`: parentheses supply the integer count, the colon begins the body, and indentation puts work inside it. `m, n = X.shape` requires a 2-D array; a flat `(3,)` vector has no `shape[1]`.
+
 ### Reshape, transpose, and combine
 
 ```python
@@ -256,6 +275,61 @@ assert X.mean(axis=0, keepdims=True).shape == (1, 3)
 ```
 
 For a 2-D ML matrix, `axis=0` gives a statistic **per feature**. `axis=1` gives one **per example**. `axis=-1` means the last axis. `keepdims=True` keeps the reduced axis at length 1, useful for broadcasting. `ddof=1` computes sample standard deviation; it differs from the default `ddof=0` used by StandardScaler.
+
+### From my averaging loop to feature statistics
+
+For three samples with two features, calculate two means. Start the accumulator before `+=`, add every complete row, then divide once **after** the loop.
+
+```python
+import numpy as np
+
+X = np.array([[1., 2.], [3., 4.], [5., 6.]])
+m, n = X.shape
+mu_manual = np.zeros(n)         # [0., 0.]: one running sum per feature
+for i in range(m):              # i = 0, 1, 2
+    mu_manual += X[i]
+mu_manual = mu_manual / m       # [9., 12.] / 3 -> [3., 4.]
+
+mu = np.mean(X, axis=0)
+var = np.var(X, axis=0, ddof=0)  # population variance; divide by m
+np.testing.assert_allclose(mu_manual, [3., 4.])
+np.testing.assert_allclose(mu, np.sum(X, axis=0) / m)
+np.testing.assert_allclose(var, [8 / 3, 8 / 3])
+np.testing.assert_allclose(var, np.mean((X - mu) ** 2, axis=0))
+assert mu.shape == var.shape == (n,)
+assert np.sum(X) == 21.0        # no axis: sum every entry
+assert np.mean(X) == 3.5        # no axis: ONE mean of all six entries
+np.testing.assert_allclose(np.mean(X, axis=1), [1.5, 3.5, 5.5])
+```
+
+Trace the running sums: `[0, 0] → [1, 2] → [4, 6] → [9, 12]`. The first mean is `(1+3+5)/3 = 3`; the second is `(2+4+6)/3 = 4`. For feature 0, squared deviations are `[4, 0, 4]`, so variance is `8/3`. Feature 1 has the same spread.
+
+**axis=0 combines rows and keeps columns:** `(3, 2) → (2,)`, one result per feature. **axis=1 combines columns:** `(3, 2) → (3,)`, one result per sample. No axis combines all entries. Dividing the sum by `X[0]` would divide by data values instead of the number of samples. Starting with `mu += X[i]` before defining mu fails; rerunning a notebook cell with an old mu can also accidentally reuse a previous total.
+
+In Andrew Ng's anomaly-detection Gaussian parameter estimate, use feature-wise `mu` and variance `var` (often named `sigma2`), both shape `(n,)`. The lab's divisor is m: NumPy's default **ddof=0**, made explicit above. `ddof=1` divides by m−1 and gives a different sample-variance estimate. Variance is not standard deviation: `np.std(X, axis=0)` is the square root of variance. These estimates alone are not a complete anomaly detector. See the official [mean](https://numpy.org/doc/stable/reference/generated/numpy.mean.html) and [variance](https://numpy.org/doc/stable/reference/generated/numpy.var.html) references.
+
+### NumPy for the specialization: quick lookup
+
+Use this table for recall; the examples above and [K-means walkthrough](UNSUPERVISED_LEARNING_AND_KMEANS.md) explain the steps. X is a 2-D numeric array with shape (m, n); idx is an integer NumPy array of shape (m,) holding cluster IDs.
+
+| Need | Expression | Meaning / result |
+| --- | --- | --- |
+| Create data | `np.array([[1., 2.], [3., 4.], [5., 6.]])` | Three samples, two features |
+| Count versus values | `X.shape[0]` / `X[0]` | Row count m / first complete row |
+| Feature count | `X.shape[1]`; `m, n = X.shape` | n columns; unpack both counts |
+| Select row / column | `X[i]` / `X[:, j]` | Shape (n,) / (m,); zero-based |
+| Select a cluster | `X[idx == i]` | All rows whose cluster ID equals i |
+| Initialize storage | `np.zeros(n)`; `np.zeros((K, n))` | Float vector / matrix; integer IDs need `dtype=int` |
+| Add / average | `np.sum(X, axis=0)`; `np.mean(X, axis=0)` | n feature sums / means |
+| Population variance | `np.var(X, axis=0, ddof=0)` | n mean squared deviations, divisor m |
+| Point–center distance | `np.linalg.norm(X[i] - centroids[j])` | One scalar; subtract vectors first |
+| Value versus index | `np.min(d)` / `np.argmin(d)` | Smallest distance / its zero-based position |
+| Rearrange values | `np.reshape(X, (2, 3))` | Same six values in two rows; also `X.reshape(2, 3)` |
+| Shuffle row indices | `randidx = np.random.permutation(m)` | Random ordering of 0 through m−1 |
+| Choose K starting rows | `X[randidx[:K]]` | Shape (K, n); require 1 ≤ K ≤ m |
+| Replace IDs with centers | `centroids[idx, :]` | Shape (m, n); repeated IDs repeat rows |
+| Vector arithmetic | `X * 2`; `(X - mu) ** 2` | Elementwise; (n,) mu broadcasts across rows |
+| Grow a Python list | `distances.append(distance)` | Add one item; modifies list and returns None |
 
 ## 4. NumPy ML calculations
 
@@ -339,6 +413,42 @@ assert X_new_scaled.shape == (1, 2)
 ```
 
 Vectorization expresses work as array operations and avoids Python loops over every row. It often runs faster; it still allocates memory. `np.vectorize` is a convenience wrapper, generally not the same performance improvement. The learning rate `0.001` above controls the update size; it is not regularization strength.
+
+### Small index and distance example
+
+```python
+import numpy as np
+
+X = np.array([[1., 2.], [3., 4.], [5., 6.]])
+centroids = np.array([[1., 2.], [4., 5.]])
+idx = np.array([0, 1, 1], dtype=int)
+i = 1                           # here i is a cluster ID
+points = X[idx == i]             # mask [False, True, True]
+np.testing.assert_array_equal(points, [[3., 4.], [5., 6.]])
+np.testing.assert_allclose(np.mean(points, axis=0), [4., 5.])
+
+distances = []                  # Python list: reset for each sample
+for j in range(centroids.shape[0]):
+    distance = np.linalg.norm(X[2] - centroids[j])
+    distances.append(distance)
+np.testing.assert_allclose(distances, [np.sqrt(32), np.sqrt(2)])
+assert np.isclose(np.min(distances), np.sqrt(2))  # distance VALUE
+assert np.argmin(distances) == 1                  # center INDEX
+np.testing.assert_array_equal(centroids[idx, :],
+                              [[1., 2.], [4., 5.], [4., 5.]])
+
+K = 2
+randidx = np.random.permutation(X.shape[0])
+starting = X[randidx[:K]]
+assert sorted(randidx.tolist()) == [0, 1, 2]
+assert starting.shape == (K, X.shape[1])
+np.testing.assert_array_equal(np.reshape(X, (2, 3)),
+                              [[1., 2., 3.], [4., 5., 6.]])
+```
+
+`idx == i` compares every assignment; `idx[i]` selects one assignment. `X[idx == i]` filters samples; `centroids[idx, :]` retrieves the center named by each integer ID. In the distance calculation, `X[2]` selects row 2, and argmin returns center 1. These indices refer to different arrays. `np.min` returns a value that cannot serve as a center ID. `append` stores each distance without adding them together; do not write `distances = distances.append(distance)`.
+
+The random order varies between runs; it avoids repeating row indices, though duplicate row values may exist. For new code, section 2's dedicated `rng.permutation(m)` is also available. Full assignment/update loops, empty-group handling, initialization and RGB reconstruction remain in the [existing K-means note](UNSUPERVISED_LEARNING_AND_KMEANS.md#5a-random-starting-rows).
 
 ### Numerical stability — intermediate practice
 
@@ -1212,6 +1322,8 @@ Official API references for checking details and extending examples:
 - [StandardScaler](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html), [Pipeline](https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html), [leakage pitfalls](https://scikit-learn.org/stable/common_pitfalls.html), [Ridge](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html).
 
 ## 14. How this sheet grows
+
+**NumPy recall follow-up, 25 October 2026:** expanded existing sections 2–4 with counts versus row values, the corrected averaging loop, feature-wise mean/population variance, a quick lookup and a small index/distance example. All 38 sheet Python blocks passed syntax checks; all 11 NumPy blocks in sections 2–4 ran with their numerical/shape assertions. Original examples were preserved. New canonical anchors, code fences and whitespace checks passed. Environment: Python 3.12.14, NumPy 2.3.5. Other sections and the course grader were not runtime-tested again.
 
 **K-means exercises follow-up, 25 October 2026:** section 12c now records both completed exercises and links to the specific mistake walkthroughs. All 11 companion-note blocks and this section's example ran; all 35 sheet blocks passed syntax checks. Masks, feature means, scalar broadcasting, singleton groups, ties, empty-group policy, links and preservation checks passed. See the [verification record](UNSUPERVISED_LEARNING_AND_KMEANS.md#sources-and-verification). Exercise 2's course unit-test success is user-confirmed; the course grader was not rerun here.
 

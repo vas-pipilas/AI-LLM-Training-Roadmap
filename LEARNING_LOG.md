@@ -142,6 +142,14 @@ Next hands-on practice: use a second RGB image, predict each shape before runnin
 
 Verification: all 14 lesson blocks and the canonical K-means example ran with assertions; all 35 canonical Python blocks passed syntax checks. Pixel order, palette lookup, lossy error, initialization, storage math, new links and preservation of earlier examples passed. See the lesson's verification record for versions and scope. The course notebook/grader and an actual packed image encoder were not run here.
 
+### 25 October 2026 — NumPy operations I need to recall in ML labs
+
+Extended the [same canonical cheat sheet](knowledge/PYTHON_ML_CODING_CHEAT_SHEET.md#numpy-for-the-specialization-quick-lookup), preserving its numbered structure and existing examples. The focused [NumPy reference](knowledge/NUMPY_FOR_ML.md) now points to the worked mean/variance explanation; the existing [K-means note](knowledge/UNSUPERVISED_LEARNING_AND_KMEANS.md) remains the deeper source for assignment, masks, initialization and palette reconstruction.
+
+The mistake to remember: X[0] contains the first row's values; X.shape[0] counts rows. Write `for i in range(m):`, initialize `mu = np.zeros(n)` before adding rows, and divide by m after the loop. `np.mean(X, axis=0)` performs those feature-wise averages directly. The Gaussian parameter estimate uses `np.var(X, axis=0, ddof=0)`, dividing squared deviations by m. np is the module alias; X and centroids are my arrays. A distance value, a sample index and a centroid ID have different jobs.
+
+Verification: all 38 canonical Python blocks passed syntax checks, all 11 NumPy blocks in sections 2–4 ran with assertions, all earlier examples were preserved, and new canonical anchors, fences and whitespace passed. Python 3.12.14, NumPy 2.3.5. Other sections and course graders were not runtime-tested again. This records a reference update, not new course completion or mastery.
+
 ## Concepts to revisit
 
 Add entries here as they appear during training. A useful entry answers three questions:

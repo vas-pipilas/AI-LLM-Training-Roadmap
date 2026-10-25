@@ -2,6 +2,8 @@
 
 This is my practical NumPy reference for machine-learning labs. The goal is not to memorize the NumPy API. It is to recognize the small set of array, shape, indexing, and linear-algebra operations that keep appearing in ML.
 
+For the complete specialization syntax lookup, use the [canonical Python ML coding cheat sheet](PYTHON_ML_CODING_CHEAT_SHEET.md#numpy-for-the-specialization-quick-lookup). Its [worked averaging example](PYTHON_ML_CODING_CHEAT_SHEET.md#from-my-averaging-loop-to-feature-statistics) traces initialization, range, axis=0 and population variance. Keep this focused note for deeper array explanations.
+
 The most important rule:
 
 > **Before debugging the mathematics, inspect the shapes.**
@@ -299,12 +301,13 @@ Reshape changes the arrangement/shape, not the underlying values.
 
 ```python
 mu = np.mean(X, axis=0)
+var = np.var(X, axis=0, ddof=0)  # population variance; one value per feature
 sigma = np.std(X, axis=0)
 minimum = np.min(X, axis=0)
 maximum = np.max(X, axis=0)
 ```
 
-With `axis=0`, calculate one statistic for each feature/column.
+With `axis=0`, combine rows and calculate one statistic for each feature/column. For the anomaly-detection Gaussian estimate, variance uses divisor m: `ddof=0` (NumPy's default). `ddof=1` instead divides by m−1. Variance is the mean squared deviation; standard deviation is its square root. See the [worked feature statistics](PYTHON_ML_CODING_CHEAT_SHEET.md#from-my-averaging-loop-to-feature-statistics) for concrete arrays.
 
 Z-score normalization:
 
