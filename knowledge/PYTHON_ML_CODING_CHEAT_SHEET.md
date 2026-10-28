@@ -1441,3 +1441,22 @@ Official API references for checking details and extending examples:
 
 
 
+
+
+## 12e. Collaborative filtering + TensorFlow custom training (Andrew Ng lab)
+
+**Canonical deep dive:** [Collaborative Filtering — from loops to training](COLLABORATIVE_FILTERING.md). **TensorFlow/Keras API detail:** [TensorFlow/Keras reference](TENSORFLOW_KERAS_FOR_ML.md).
+
+Mental model: `Y[i,j]` is movie `i`, user `j`; `R[i,j]` says if rating exists. `X[i]` is a movie feature vector, `W[j]` a user preference vector, and `b[0,j]` the user's bias. The scored pair is a dot product plus bias. The scalar cost aggregates **observed** squared errors plus the squared lengths of **all** movie and user parameter vectors (not bias). The student independently built the for-loop version; notebook public tests passed, unregularized cost 13.67 and regularized cost 28.09.
+
+General syntax worth keeping:
+```python
+import numpy as np
+matrix = np.array([[2., 1.], [3., 4.]])
+print(matrix.shape)           # (2, 2)
+print(matrix[0, 1])          # 1.0: row 0, column 1
+print(np.sum(matrix ** 2))   # 30.0: elementwise squares then sum
+print(np.dot(matrix[0], matrix[1]))  # 10.0: one vector dot product
+```
+
+TensorFlow training building blocks (lab syntax): `tf.Variable` trainable parameters, `tf.random.normal` random starts, `tf.linalg.matmul` matrix product, `tf.transpose` swap axes, `tf.reduce_sum` scalar reduction, `tf.GradientTape` automatic differentiation, `tape.gradient` derivatives, `keras.optimizers.Adam` optimization, `optimizer.apply_gradients(zip(grads, variables))` parameter updates. `np.c_` inserts a user column; `tf.argsort` ranks prediction indices. **Cost computation and parameter updates are separate steps.** See focused note for shapes, normalization and exact lab sequence.

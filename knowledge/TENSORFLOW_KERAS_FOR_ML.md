@@ -566,3 +566,20 @@ And during training:
 ```text
 forward → loss → backprop → gradients → optimizer → new W,b
 ```
+
+
+## Collaborative filtering: TensorFlow without Keras Dense/fit
+
+**Course lab:** [Collaborative Filtering — complete learning note](COLLABORATIVE_FILTERING.md). This example is a recommender system, **not a typical sequential neural network**. We optimize the matrices themselves, so a custom TensorFlow training loop replaces `model.compile/fit`.
+
+```python
+# General independent autodiff demo, not the lab's graded code
+import tensorflow as tf
+weight = tf.Variable(3.0)
+with tf.GradientTape() as tape:
+    loss = (weight - 5.0)**2
+grad = tape.gradient(loss, weight)
+print(grad.numpy())  # -4.0
+```
+
+`GradientTape` records the computation, `gradient` calculates how a small variable change affects the scalar loss, and an optimizer can use that gradient to change a `tf.Variable`. In the lab, `[X, W, b]` replaces `weight`; the vectorized cost is built from `tf.linalg.matmul(X, tf.transpose(W))`, broadcast `+ b`, mask `* R`, and `tf.reduce_sum`. The optimizer is `keras.optimizers.Adam(learning_rate=1e-1)`; the custom loop uses `tape.gradient(cost_value, [X,W,b])` then `optimizer.apply_gradients(zip(grads,[X,W,b]))`. `zip` is plain Python, not a TensorFlow function. See the deep dive for the full lab context and the ungraded reference training loop.
