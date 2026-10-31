@@ -1488,3 +1488,29 @@ print(example(tf.ones((4,3))).shape)  # (4, 2)
 ~~~
 
 Similar movie search compares **movie embeddings to movie embeddings**, uses squared distance np.sum((a-b)**2), excludes self-match by diagonal masking, and chooses minimum with np.argmin. For L2-unit vectors, squared distance = 2-2*dot(a,b). Lab reported 397 users, 847 movies, 25,521 ratings, 50,884 example rows, training loss 0.0730, test loss 0.0812; both tower public tests and sq_dist public test passed. Source caveats: scaling fitted before split, repeated rows, existing-user helper error for uid 2, inverse-scaled new-user scores around 0.3 and a displayed movie2-genre metadata copy/paste bug. See dedicated note.
+
+ 
+## PCA algorithm and implementation
+
+**Deep course-aligned study note:** [PCA — Principal Component Analysis](PCA_PRINCIPAL_COMPONENT_ANALYSIS.md). PCA is unsupervised *linear* dimensionality reduction, finding new orthogonal directions maximizing **explained variance**, not selecting original columns or assigning clusters. PC1 carries maximum variance, PC2 carries maximum remaining orthogonal variance, etc. Explained variance does not equal semantic or predictive information.
+
+**Shapes/math:** X = (m,n), mu = (n,), principal axes V_k = (n,k), projected Z = (X-mu) @ V_k = (m,k), reconstructed X_approx = Z @ V_k.T + mu = (m,n). sklearn pca.components_ shape is (k,n). PCA internally **centers** features but does NOT standardize columns; use training-fitted StandardScaler where scales require it.
+
+**General runnable syntax, not graded code:**
+~~~python
+import numpy as np
+from sklearn.decomposition import PCA
+X = np.array([[0.,0.],[1.,1.],[2.,2.],[3.,3.]])
+pca = PCA(n_components=1)
+Z = pca.fit_transform(X)
+X_reconstructed = pca.inverse_transform(Z)
+print(X.shape, Z.shape, X_reconstructed.shape) # (4,2) (4,1) (4,2)
+print(pca.explained_variance_ratio_)           # [1.]
+new_point = pca.transform(np.array([[4.,4.]])) # reuse fitted axes
+~~~
+
+**API quick reference:** PCA(n_components=k) choose number; .fit(X) learn; .transform(X) project; .fit_transform(X) learn and project; .inverse_transform(Z) reconstruct approx; .explained_variance_ratio_ fraction per component; .components_ directions; .mean_ mean; np.cumsum(...) cumulative retention; X[:,0] first original column; plt.scatter(Z[:,0],Z[:,1]) plot 2 PCs.
+
+**Notebook outcomes:** six points in 2D: PC1 99.244%, PC2 0.756%; 2D→1D nearly preserves variance. 500 rows × 1000 columns: 2 PCs 14.5728% total explained variance; 3 PCs 20.8063%. The notebook incorrectly says 19% for the latter. Visible plotted groups need separate cluster validation; sklearn PCA does not scale to unit variance automatically.
+
+**ML/LLM context:** useful to visualize and inspect large embeddings, optionally compress when quality is measured, but not a mandatory transformer/RAG step. 2D PCA plots can alter semantic similarity rankings; keep original embeddings for retrieval unless downstream metrics justify reduction. Fit scaler/PCA on train only; transform test/new observations without refitting. Compare PCA (reduce dimensionality) vs K-means (cluster assignments).
