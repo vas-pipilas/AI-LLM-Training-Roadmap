@@ -583,3 +583,24 @@ print(grad.numpy())  # -4.0
 ```
 
 `GradientTape` records the computation, `gradient` calculates how a small variable change affects the scalar loss, and an optimizer can use that gradient to change a `tf.Variable`. In the lab, `[X, W, b]` replaces `weight`; the vectorized cost is built from `tf.linalg.matmul(X, tf.transpose(W))`, broadcast `+ b`, mask `* R`, and `tf.reduce_sum`. The optimizer is `keras.optimizers.Adam(learning_rate=1e-1)`; the custom loop uses `tape.gradient(cost_value, [X,W,b])` then `optimizer.apply_gradients(zip(grads,[X,W,b]))`. `zip` is plain Python, not a TensorFlow function. See the deep dive for the full lab context and the ungraded reference training loop.
+
+ 
+## Content-based two-tower TensorFlow / Keras recommender
+
+**Deep dive:** [CONTENT_BASED_FILTERING.md](CONTENT_BASED_FILTERING.md). Input user features (14 genre averages) differ from movie input (16 values: year, mean, 14 multi-hot genre flags). Two independently trained Sequential models transform each type into a compatible 32-number learned embedding. Architecture: 256 ReLU, 128 ReLU, 32 linear for each tower. Keras Functional API joins two inputs and normalizes each output with tf.linalg.l2_normalize(axis=1) before Dot(axes=1). L2-unit vectors have cosine-like dot scores in [-1,1].
+
+Independent small Keras wiring example (not graded code):
+~~~python
+import tensorflow as tf
+user_input = tf.keras.Input(shape=(3,))
+movie_input = tf.keras.Input(shape=(2,))
+u = tf.keras.layers.Dense(4)(user_input)
+m = tf.keras.layers.Dense(4)(movie_input)
+u = tf.math.l2_normalize(u, axis=1)
+m = tf.math.l2_normalize(m, axis=1)
+score = tf.keras.layers.Dot(axes=1)([u,m])
+toy = tf.keras.Model([user_input,movie_input], score)
+print(toy([tf.ones((2,3)), tf.ones((2,2))]).shape) # (2,1)
+~~~
+
+Course training uses MeanSquaredError, Adam(learning_rate=0.01), compile, fit(epochs=30), evaluate, predict. These automatically handle gradients, unlike the earlier collaborative-filtering lab's explicit GradientTape custom training loop. Input StandardScaler, target MinMaxScaler((-1,1)), and output tf.linalg.l2_normalize serve distinct purposes. Similar-movie search reuses only the trained item tower to obtain 847 x 32 embeddings and ranks by squared Euclidean distance. Read dedicated note for source limitations and public-test evidence.

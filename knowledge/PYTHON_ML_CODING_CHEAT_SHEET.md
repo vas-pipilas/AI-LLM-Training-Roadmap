@@ -1460,3 +1460,31 @@ print(np.dot(matrix[0], matrix[1]))  # 10.0: one vector dot product
 ```
 
 TensorFlow training building blocks (lab syntax): `tf.Variable` trainable parameters, `tf.random.normal` random starts, `tf.linalg.matmul` matrix product, `tf.transpose` swap axes, `tf.reduce_sum` scalar reduction, `tf.GradientTape` automatic differentiation, `tape.gradient` derivatives, `keras.optimizers.Adam` optimization, `optimizer.apply_gradients(zip(grads, variables))` parameter updates. `np.c_` inserts a user column; `tf.argsort` ranks prediction indices. **Cost computation and parameter updates are separate steps.** See focused note for shapes, normalization and exact lab sequence.
+
+ 
+## 12f. Content-based filtering (two-tower recommender lab)
+
+**Detailed theory, actual source and caveats:** [Content-based filtering](CONTENT_BASED_FILTERING.md). Keep this file as the canonical mega cheat sheet.
+
+**Input is NOT embedding:** stored user row has id/count/mean + 14 genre averages, but training uses only the last 14 (u_s=3). Stored movie row has id + year/mean + 14 **multi-hot** genre flags, and uses only last 16 (i_s=1). A genre average of zero can mean no ratings, not dislike. Two independent towers map 14 and 16 original input features to two **learned 32-dimensional output embeddings**. Learned embeddings are not hardcoded genre labels or the model's own Dense weights.
+
+Architecture of both towers: Dense(256,ReLU) -> Dense(128,ReLU) -> Dense(num_outputs=32,linear). Keras Functional API connects with L2-normalized output vectors and Dot(axes=1). Trainable params: 40,864 user + 41,376 item = 82,240. Normalized dot product = cosine similarity, [-1,1]. Target ratings are scaled to (-1,1) using MinMaxScaler; StandardScaler separately transforms input columns. Distinguish **three** scalers: input standardization, target min-max, output unit-vector L2 normalization.
+
+Keras workflow: MeanSquaredError, Adam(learning_rate=0.01), model.compile, model.fit(...,epochs=30), model.evaluate, model.predict, inverse_transform and np.argsort(-scores). Unlike the earlier collaborative-filtering custom GradientTape loop, compile/fit handles backprop and optimizer updates.
+
+General syntax (not graded):
+~~~python
+import numpy as np
+import tensorflow as tf
+a = np.array([1., 2., 3.])
+b = np.array([2., 2., 1.])
+print(np.sum((a-b)**2))   # 5.0
+example = tf.keras.Sequential([
+    tf.keras.layers.Input(shape=(3,)),
+    tf.keras.layers.Dense(6, activation='relu'),
+    tf.keras.layers.Dense(2)
+])
+print(example(tf.ones((4,3))).shape)  # (4, 2)
+~~~
+
+Similar movie search compares **movie embeddings to movie embeddings**, uses squared distance np.sum((a-b)**2), excludes self-match by diagonal masking, and chooses minimum with np.argmin. For L2-unit vectors, squared distance = 2-2*dot(a,b). Lab reported 397 users, 847 movies, 25,521 ratings, 50,884 example rows, training loss 0.0730, test loss 0.0812; both tower public tests and sq_dist public test passed. Source caveats: scaling fitted before split, repeated rows, existing-user helper error for uid 2, inverse-scaled new-user scores around 0.3 and a displayed movie2-genre metadata copy/paste bug. See dedicated note.
