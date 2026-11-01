@@ -6,7 +6,7 @@ The goal is not to collect courses or badges. I want to understand the technolog
 
 ## Where I am now
 
-**Current phase: Machine Learning foundations**
+**Current phase: Deep Learning Specialization — next agreed learning step (2026-11-01)**
 
 ### Completed
 
@@ -17,11 +17,16 @@ The goal is not to collect courses or badges. I want to understand the technolog
 
 ### Next
 
-- 🔄 **Andrew Ng / DeepLearning.AI — Machine Learning Specialization**
+- ✅ **Machine Learning Specialization study material and completed labs documented** (external certificate status not independently checked)
+- ▶️ **NEXT: Andrew Ng — Deep Learning Specialization**, followed by PyTorch for Deep Learning, Transformers/LLM engineering and production ML/LLMOps
 - Keep writing Python alongside the course instead of only watching lectures.
 - Build small exercises/projects that force me to start from an empty file, reason about the problem, implement it, test it, and explain what I built.
 
 See [ROADMAP.md](ROADMAP.md) for the full path and [LEARNING_LOG.md](LEARNING_LOG.md) for progress and things worth revisiting.
+
+## Adaptive, personalized learning policy
+
+[**Adaptive ML/LLM Engineering Training Contract**](knowledge/ADAPTIVE_ML_LLM_TRAINING_CONTRACT.md) — a standing requirement to evaluate my questions, my independently written code, mistakes, learning pace and interests, then adjust the course path toward a real ML/LLM engineering career. No generic certificate conveyor belt. [ROADMAP.md](ROADMAP.md) records the agreed updated sequence: Deep Learning Specialization → PyTorch → Transformers/LLM → production systems and telecom portfolio.
 
 ## Working principle
 

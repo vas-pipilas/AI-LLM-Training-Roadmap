@@ -160,6 +160,14 @@ Observed in the uploaded output: mu `[14.11222578,14.99771051]`, var `[1.8326314
 
 Verification: seven teaching fixtures and extra metric/shape/grid checks passed; all 78 Python blocks across the five edited documents passed syntax checks; both exercise bodies match the upload structurally; 74 links into edited local documents passed. Python 3.12.14 / NumPy 2.3.5. Course data/helpers/grader and unrelated runtime examples were not rerun. See the [scope record](knowledge/ANOMALY_DETECTION.md#sources-and-verification).
 
+### 1 November 2026 — Specialization consolidation and adaptive next path
+
+Machine Learning Specialization Courses 1–3 consolidated into the master learning booklet. Lunar Lander notebook reports 650 episodes, a last-100 average of 201.03 and 9.89 minutes, with the DQN graded public tests passing. These are recorded notebook results rather than independent certificate verification.
+
+Lessons from questions and independently written code: the greatest difficulty is often *where numerical input and target values come from*, how arrays/tensors are shaped, how math maps to vectorized code and how forward predictions, loss, gradients and weight updates form an end-to-end learning system. Specific bugs included nested state-shape tuples, quoted numeric parameter name, and masking terminal reward rather than only future Q. Strengths include independently completing several graded functions and asking production-minded, causally useful questions.
+
+**User-approved personalized training decision:** prioritize Andrew Ng Deep Learning Specialization next, then PyTorch for Deep Learning, Transformers/LLM applications, and production ML/LLMOps with a privacy-safe telecom-oriented capstone. Evaluate progress and interests continuously and recommend course adjustments based on actual evidence rather than a generic certificate sequence. See [Adaptive Training Contract](knowledge/ADAPTIVE_ML_LLM_TRAINING_CONTRACT.md) and [Roadmap](ROADMAP.md).
+
 ## Concepts to revisit
 
 Add entries here as they appear during training. A useful entry answers three questions:

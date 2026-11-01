@@ -1,155 +1,67 @@
 # Roadmap
 
-This is a direction, not a rigid calendar. I would rather spend another week understanding something properly than mark a phase complete because a course progress bar reached 100%.
+This is a direction, not a rigid calendar. I would rather spend time understanding a model properly than advance because a course progress bar reached 100%.
+
+**Career target:** ML / LLM engineer capable of designing, building, evaluating, debugging and operating real AI systems, with a differentiated Telecom / Voice / SIP / IMS / observability specialization.
+
+**Adaptive training is mandatory:** See [Adaptive Training Contract](knowledge/ADAPTIVE_ML_LLM_TRAINING_CONTRACT.md). Continuously evaluate genuine student progress, actual questions, repeated friction, code and testing results, and interests. Adjust proposed course order with evidence and student approval. Preserve the [Golden Guided Coding Rule](knowledge/GUIDED_CODING_GOLDEN_RULE.md).
 
 ## Phase 1 — Python foundation ✅
 
-**Status:** Complete (September 2026)
+Completed Jose Portilla's Complete Python Bootcamp in September 2026. Core Python fundamentals are established, but fluency with numerical APIs and tensor operations continues through practical ML exercises. **Do not prescribe another general Python bootcamp by default.**
 
-Completed Jose Portilla's *Complete Python Bootcamp: From Zero to Hero in Python*.
+## Phase 2 — Machine Learning foundations ✅ (documented study milestone)
 
-The purpose was to become comfortable enough with Python that AI code is not a black box: functions, data structures, loops and conditionals, modules, files, exceptions, OOP, decorators, testing, and general program structure.
+Andrew Ng / DeepLearning.AI Machine Learning Specialization, Courses 1–3 studied through regression/classification, neural networks, trees/ensembles, K-means, anomaly detection, collaborative/content-based recommendation, PCA and Lunar Lander DQN. The [Complete Specialization Booklet](knowledge/MACHINE_LEARNING_SPECIALIZATION_COMPLETE_BOOKLET.md) reconciles these topics. Recorded public tests and DQN training are documented in the individual notes. The repository does **not independently verify all hidden graders or external certificate-award status**.
 
-**Decision:** do not take another generic Python course. Python development continues through practice and later ML/LLM work.
+### What we learned about the learner
 
----
+Strengths: conceptual understanding improves quickly after concrete dataflow examples; student-authored graded code and passing public tests; strong production systems reasoning and telecom experience.
 
-## Phase 2 — Machine Learning foundations 🔄
+Targeted gaps: input/target/reward provenance, tensor dimensions/axes and tuples, translating formulas to vectorized code, understanding the complete forward/loss/backprop/optimizer chain, and distinction between training/inference and database/model state.
 
-**Status:** Current
+Respond with focused exercises, shape tracing and numerical examples, **not a restart of Python fundamentals**. See [Adaptive Training Contract](knowledge/ADAPTIVE_ML_LLM_TRAINING_CONTRACT.md).
 
-Primary learning path: **Andrew Ng / DeepLearning.AI Machine Learning Specialization**.
+## Phase 3A — Deep Learning Specialization (NEXT)
 
-What I want from this phase is not just knowing how to call scikit-learn. I want the intuition behind what a model is doing and why.
+**Agreed 2026-11-01:** Take Andrew Ng's [Deep Learning Specialization](https://www.deeplearning.ai/specializations/deep-learning) before the PyTorch certificate. This refines the previous roadmap instead of replacing the destination.
 
-Core areas include:
+Study all five courses in their sequence, prioritizing the difficult connections: neural-network dataflow, forward/back propagation, gradient checking, optimization, regularization, error analysis, sequence models, attention and Transformers. Courses 1, 2 and 5 have particularly high relevance; do not omit the other courses without new evidence.
 
-- supervised vs. unsupervised learning;
-- regression and classification;
-- loss/cost functions and gradient descent;
-- model training and evaluation;
-- overfitting, underfitting, bias and variance;
-- feature engineering and preprocessing;
-- decision trees and ensemble methods;
-- clustering and anomaly detection;
-- recommender-system fundamentals;
-- practical NumPy, pandas, scikit-learn and notebook work.
+**Hands-on competency target:** Independently build a tiny model, trace actual feature and label origins, explain batch/layer shapes, calculate and explain a forward prediction and loss, describe gradients and Adam updates, evaluate with proper splits, then save/reload and predict on new input. Look up API syntax as needed. This is a readiness target, not an externally imposed gate or graded-solution request.
 
-Python practice runs in parallel. Whenever possible, implement small pieces myself before hiding them behind libraries.
+Use targeted mathematics refreshers only when actual bottlenecks occur, rather than mandatory repetition of an entire prior math specialization.
 
-**Exit condition:** I can take a dataset, frame an ML problem, prepare the data, choose a reasonable baseline, train/evaluate it, diagnose obvious problems, and explain the result.
+## Phase 3B — PyTorch for Deep Learning Professional Certificate
 
----
+After deep-learning concepts are better internalized, work through [PyTorch for Deep Learning](https://www.deeplearning.ai/specializations/pytorch-for-deep-learning-professional-certificate). Focus on tensors and autograd, Dataset/DataLoader, custom training loops, pretrained models, evaluation, inference, saving and deployment.
 
-## Phase 3 — Deep Learning and PyTorch
+Suggested proof: rebuild one familiar previous model in PyTorch, compare results and evaluation criteria, explain tensor shapes and parameter updates, and package a small reproducible application.
 
-Learn neural networks deeply enough that transformers later make sense instead of appearing as magic.
+## Phase 4 — Transformers, NLP and LLM Engineering
 
-Topics:
+Study tokenization, embeddings, self-attention, Transformers, language model inference, retrieval/RAG, fine-tuning, tool calling, agents and LLM-specific evaluation. Use [Natural Language Processing Specialization](https://www.deeplearning.ai/specializations/natural-language-processing/) modules selectively if they serve current gaps; do not automatically add overlapping certificates.
 
-- tensors and PyTorch;
-- forward propagation and backpropagation;
-- activation and loss functions;
-- optimization;
-- training loops, validation and regularization;
-- embeddings;
-- sequence-model background where useful;
-- attention;
-- transformer foundations.
-
-The practical framework target is **PyTorch**, even if individual courses expose TensorFlow as well.
-
-**Exit condition:** build and train neural networks in PyTorch and understand the mechanics of their training well enough to debug them.
-
----
-
-## Phase 4 — LLM Engineering
-
-This is where the eventual specialization becomes explicit.
-
-Topics will include:
-
-- transformer architecture in more depth;
-- tokenization and context windows;
-- embeddings and semantic search;
-- Hugging Face ecosystem;
-- model APIs and local/open models where useful;
-- prompting as an engineering tool rather than a substitute for architecture;
-- structured output and tool/function calling;
-- vector databases;
-- RAG architecture;
-- reranking and retrieval quality;
-- agents and multi-step tool use;
-- evaluation;
-- fine-tuning, LoRA and PEFT;
-- inference, quantization and serving fundamentals;
-- safety, security, privacy and guardrails.
-
-A key rule here is to understand the layers underneath frameworks. LangChain/LlamaIndex/etc. may be useful tools, but I do not want to become dependent on abstractions I cannot explain.
-
----
+Build a sourced document-question-answering system with measured retrieval and answer quality rather than merely a UI wrapping an LLM API.
 
 ## Phase 5 — Production AI / MLOps / LLMOps
 
-Knowing how to make a notebook work is different from engineering a system.
+Focus on APIs, data pipelines, model and data versioning, reproducibility, monitoring, evaluation, drift, cost, latency, fallback behavior, testing and safety. Add focused production training only when relevant to the project and current gaps.
 
-Build competence in:
-
-- FastAPI and service/API design;
-- PostgreSQL and appropriate data stores;
-- Docker;
-- Linux;
-- Git/GitHub and good engineering workflow;
-- testing;
-- CI/CD;
-- cloud fundamentals;
-- model and application deployment;
-- observability and monitoring;
-- model/data drift concepts;
-- evaluation pipelines;
-- secrets and configuration;
-- reliability, cost and performance;
-- MLOps/LLMOps practices.
-
-**Exit condition:** deploy an AI service that another person could actually use and operate, with tests, logs, configuration, monitoring and a reproducible deployment.
-
----
+**Portfolio capstone:** A privacy-safe Telecom Incident Intelligence system using synthetic or properly sanitized data: KPI anomaly detection/classification, retrieval from approved troubleshooting documents and read-only analytical tools, with measured false positives, grounded answer quality, latency/cost and operational failure containment. No production HOMER access or customer data without explicit approval.
 
 ## Phase 6 — Portfolio and domain specialization
 
-My Voice/Telecom background should become a differentiator.
-
-Possible serious portfolio directions:
-
-- telecom engineering RAG over RFC/3GPP/vendor documentation with citations;
-- SIP call-flow reconstruction and RCA assistant;
-- PCAP/log → structured events → analysis → LLM explanation pipeline;
-- anomaly/incident analysis over telecom KPI data;
-- an agent that gathers evidence from multiple engineering sources before proposing an RCA;
-- AI functionality around the kind of observability/analytics systems I already understand operationally.
-
-Projects must avoid real customer-sensitive data. Use synthetic, sanitized, public, or safely generated datasets.
-
-The aim is to demonstrate both sides of the profile: **AI/LLM engineering + deep telecom domain knowledge**.
-
----
+Use ML and LLM engineering together with Voice / IMS / SIP / SS7 / Diameter and observability skills. Publish reproducible projects, honest evaluations, architecture tradeoffs and test evidence rather than collecting certificates alone.
 
 ## Certification philosophy
 
-Certifications are checkpoints, not the curriculum.
+Certificates document learning progress. Job readiness depends on independently explaining dataflow, building practical software, selecting sound metrics, diagnosing mistakes and evaluating real performance. Course order is **adaptive**, not fixed: revisit at major checkpoints or repeated difficulties. Recommendations must distinguish observed competency from inference and user-selected interests.
 
-The order should normally be:
+## Current next action
 
-**learn → practice → build → gain cloud/tool experience → certify**
-
-Current certification candidates are tracked in [CERTIFICATIONS.md](CERTIFICATIONS.md). We should re-check the market and exam versions when I approach each certification instead of blindly following a list written months earlier.
-
----
+**Start Deep Learning Specialization, Course 1: Neural Networks and Deep Learning.** Keep existing student-first guided coding procedure. When a lab passes, conduct a post-test numerical/data-shape walkthrough on request and update the canonical cheat sheet and knowledge records selectively.
 
 ## Long-term destination
 
-The target is competence for **AI/LLM Engineering roles**, particularly roles involving production systems, RAG/agents, AI platforms, MLOps/LLMOps, or technically demanding domains.
-
-I should eventually be able to say, and demonstrate with code:
-
-> I can understand the problem, choose an appropriate AI approach, build the system, evaluate it, debug it, deploy it, and operate it.
+Production-capable ML/LLM engineer with distinctive expertise in Voice/Telecom systems. Depth, correctness and engineering judgment take priority over speed or the number of credentials.

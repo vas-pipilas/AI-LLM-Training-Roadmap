@@ -31,3 +31,7 @@ This is the canonical instructional contract for Python, NumPy, ML and LLM codin
 
 ## Working sequence summary
 **Student attempts → instructor reviews/corrects → official test → deeper explanation on request → durable documentation.**
+
+## Continuous learning assessment and adaptive roadmap (2026-11-01)
+
+Use [Adaptive ML/LLM Engineering Training Contract](ADAPTIVE_ML_LLM_TRAINING_CONTRACT.md) to assess the student's evidence-based progress, recurring blockers, questions, interests and coding fluency against their career target. Revisit recommendations at meaningful checkpoints; do not force exams, premature explanations or unrequested graded code. When a course change makes sense, explain the reason and gain student's approval. This supplements rather than alters the student-first graded-exercise rules above.
