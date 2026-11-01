@@ -37,6 +37,11 @@ Course completion is useful, but it is not the finish line. Projects and the abi
 
 Extend this same canonical file as I learn new coding topics. Keep the focused notes below as deeper references. GitHub is the durable source of truth; chat memory cannot store the full sheet verbatim.
 
+
+## Complete Machine Learning Specialization Booklet — Courses 1, 2, and 3
+
+[**Read the full Machine Learning Specialization booklet**](knowledge/MACHINE_LEARNING_SPECIALIZATION_COMPLETE_BOOKLET.md) — the one continuous, human-readable theory/code guide for all three courses: regression and classification; neural networks, evaluation, trees and ensembles; K-means, anomaly detection, recommenders, PCA and Lunar Lander DQN. It consolidates verified notes and lab lessons, without replacing the canonical Python cheat sheet or overstating assessment status.
+
 ## Core knowledge notes
 
 When a subject becomes foundational enough that I will need it again later, it gets its own detailed reference under `knowledge/`. These are not copied course notes. They are written around the explanations, mistakes, questions, and mental models that actually helped the subject click for me.
