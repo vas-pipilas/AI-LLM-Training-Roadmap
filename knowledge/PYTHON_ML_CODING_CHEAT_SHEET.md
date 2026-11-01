@@ -1514,3 +1514,33 @@ new_point = pca.transform(np.array([[4.,4.]])) # reuse fitted axes
 **Notebook outcomes:** six points in 2D: PC1 99.244%, PC2 0.756%; 2D→1D nearly preserves variance. 500 rows × 1000 columns: 2 PCs 14.5728% total explained variance; 3 PCs 20.8063%. The notebook incorrectly says 19% for the latter. Visible plotted groups need separate cluster validation; sklearn PCA does not scale to unit variance automatically.
 
 **ML/LLM context:** useful to visualize and inspect large embeddings, optionally compress when quality is measured, but not a mandatory transformer/RAG step. 2D PCA plots can alter semantic similarity rankings; keep original embeddings for retrieval unless downstream metrics justify reduction. Fit scaler/PCA on train only; transform test/new observations without refitting. Compare PCA (reduce dimensionality) vs K-means (cluster assignments).
+
+
+## Reinforcement Learning algorithm and DQN implementation
+
+**Complete lab-based reference:** [RL and Deep Q-Learning Lunar Lander](REINFORCEMENT_LEARNING_DQN_LUNAR_LANDER.md). **Cross-course theory:** [Complete Course 3 Booklet](COURSE_3_COMPLETE_BOOKLET.md).
+
+**Where data comes from:** env.reset() creates initial state; env.step(action) simulates physical transitions and returns reward, new state and done. No human labels the correct action at each state. Save (state,action,reward,next_state,done) transitions in replay; a Bellman target creates an estimated training label. Original lab: state_size=(8,), four discrete actions. The main Q-network predicts four Q-values; the slower target network supplies future estimates.
+
+**Two-tower DQN architecture?** No: these two Q models are same-role networks with separate weights, one online and one target. Each is Input(shape=state_size) -> Dense(64,relu) -> Dense(64,relu) -> Dense(num_actions,linear). Do not confuse with content-based recommendation's independent user/movie towers.
+
+**Original lab hyperparameters:** MEMORY_SIZE=100000, GAMMA=0.995, ALPHA=1e-3, NUM_STEPS_FOR_UPDATE=4, initial epsilon=1.0, minimum epsilon described as 0.01. Uses legacy Gym 0.24.0 LunarLander-v2; modern Gymnasium signatures differ.
+
+**Essential snippets (general Python semantics and lab code reading):**
+~~~python
+import numpy as np
+from collections import deque, namedtuple
+state_shape = (8,)
+print((state_shape,)) # ((8,),) WRONG nested shape for Keras Input
+state = np.zeros(8)
+print(np.expand_dims(state,axis=0).shape)  # (1,8)
+buffer = deque(maxlen=3)
+Transition = namedtuple('Transition',['state','action','reward','next_state','done'])
+q = np.array([[1,3,2],[4,0,5]])
+chosen_actions = np.array([1,2])
+print(q[np.arange(2),chosen_actions]) # [3,5]
+~~~
+
+**TensorFlow syntax:** tf.reduce_max(target_q_network(next_states),axis=-1) selects max action per transition; tf.cast(actions,tf.int32), tf.range(B), tf.stack(...,axis=1), tf.gather_nd(...) select chosen-action Q predictions. Bellman: target = rewards + (1 - done_vals)*(gamma*max_qsa) using a numeric mask; do not zero-out the immediate reward. MSE(target,predictedQ) is scalar training loss. tf.GradientTape, tape.gradient and optimizer.apply_gradients(zip(...)) train main Q model; target weights undergo soft updates separately. @tf.function may accelerate a custom graph-compatible train step.
+
+**Observed lab outcome:** three Exercise 1 tests PASS, Exercise 2 PASS; episode 650 last-100 score 201.03 >=200 threshold, runtime 593.10 seconds. Results are notebook-observed, not a new evaluation. Training score sum is **undiscounted** episode reward; Bellman return uses gamma. DQN is relevant ML/RL foundation but not default modern LLM training.
