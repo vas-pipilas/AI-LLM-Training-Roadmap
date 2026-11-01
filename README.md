@@ -61,6 +61,13 @@ They should work both as a deeper refresher when I cannot watch a lecture and as
 
 This section should grow selectively. Not every lesson deserves a document; core concepts that later knowledge depends on do.
 
+
+## Course 3 — consolidated learning booklet
+
+- [**Complete Course 3 Learning Booklet**](knowledge/COURSE_3_COMPLETE_BOOKLET.md) — one human-readable, detailed reading path across K-means, anomaly detection, collaborative filtering, content-based recommendation, PCA, and reinforcement learning, with equations, code, lessons learned, limitations and real-world engineering connections. This is the consolidated booklet, not a duplicate canonical code cheat sheet.
+- [**Deep Q-Learning / Lunar Lander — Complete Lab Reference**](knowledge/REINFORCEMENT_LEARNING_DQN_LUNAR_LANDER.md) — explains where the eight state inputs and rewards originate, experience replay, Bellman targets, two Q-networks, TensorFlow tensor shapes, training loop and the completed 650-episode run.
+- [**Canonical Python ML Coding Cheat Sheet**](knowledge/PYTHON_ML_CODING_CHEAT_SHEET.md) — now also includes the Reinforcement Learning algorithm and DQN implementation section. Reusable syntax stays here.
+
 ## Repository map
 
 - [ROADMAP.md](ROADMAP.md) — the evolving long-term plan and current phase.
