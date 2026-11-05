@@ -6,7 +6,7 @@ The goal is not to collect courses or badges. I want to understand the technolog
 
 ## Where I am now
 
-**Current phase: Deep Learning Specialization — next agreed learning step (2026-11-01)**
+**Current phase: Deep Learning Specialization — started 2026-11-05**
 
 ### Completed
 
@@ -18,7 +18,8 @@ The goal is not to collect courses or badges. I want to understand the technolog
 ### Next
 
 - ✅ **Machine Learning Specialization study material and completed labs documented** (external certificate status not independently checked)
-- ▶️ **NEXT: Andrew Ng — Deep Learning Specialization**, followed by PyTorch for Deep Learning, Transformers/LLM engineering and production ML/LLMOps
+- ▶️ **IN PROGRESS: Andrew Ng — Deep Learning Specialization, Course 1: Neural Networks and Deep Learning** (started 2026-11-05; no DLS assessments reported yet)
+- After this: PyTorch for Deep Learning, Transformers/LLM engineering and production ML/LLMOps
 - Keep writing Python alongside the course instead of only watching lectures.
 - Build small exercises/projects that force me to start from an empty file, reason about the problem, implement it, test it, and explain what I built.
 
@@ -27,6 +28,8 @@ See [ROADMAP.md](ROADMAP.md) for the full path and [LEARNING_LOG.md](LEARNING_LO
 ## Adaptive, personalized learning policy
 
 [**Adaptive ML/LLM Engineering Training Contract**](knowledge/ADAPTIVE_ML_LLM_TRAINING_CONTRACT.md) — a standing requirement to evaluate my questions, my independently written code, mistakes, learning pace and interests, then adjust the course path toward a real ML/LLM engineering career. No generic certificate conveyor belt. [ROADMAP.md](ROADMAP.md) records the agreed updated sequence: Deep Learning Specialization → PyTorch → Transformers/LLM → production systems and telecom portfolio.
+
+**Current course evidence:** [Deep Learning Specialization Progress Tracker](knowledge/DEEP_LEARNING_SPECIALIZATION_PROGRESS.md). This records student-reported milestones, observed code/tests, recurring blockers and teaching adjustments; it does not fabricate progress.
 
 ## Working principle
 

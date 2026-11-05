@@ -22,15 +22,17 @@ Targeted gaps: input/target/reward provenance, tensor dimensions/axes and tuples
 
 Respond with focused exercises, shape tracing and numerical examples, **not a restart of Python fundamentals**. See [Adaptive Training Contract](knowledge/ADAPTIVE_ML_LLM_TRAINING_CONTRACT.md).
 
-## Phase 3A — Deep Learning Specialization (NEXT)
+## Phase 3A — Deep Learning Specialization (IN PROGRESS; started 2026-11-05)
 
-**Agreed 2026-11-01:** Take Andrew Ng's [Deep Learning Specialization](https://www.deeplearning.ai/specializations/deep-learning) before the PyTorch certificate. This refines the previous roadmap instead of replacing the destination.
+**Started 2026-11-05 (student reported); agreed path 2026-11-01:** Study Andrew Ng's [Deep Learning Specialization](https://www.deeplearning.ai/specializations/deep-learning) before the PyTorch certificate. This refines the previous roadmap instead of replacing the destination.
 
 Study all five courses in their sequence, prioritizing the difficult connections: neural-network dataflow, forward/back propagation, gradient checking, optimization, regularization, error analysis, sequence models, attention and Transformers. Courses 1, 2 and 5 have particularly high relevance; do not omit the other courses without new evidence.
 
 **Hands-on competency target:** Independently build a tiny model, trace actual feature and label origins, explain batch/layer shapes, calculate and explain a forward prediction and loss, describe gradients and Adam updates, evaluate with proper splits, then save/reload and predict on new input. Look up API syntax as needed. This is a readiness target, not an externally imposed gate or graded-solution request.
 
 Use targeted mathematics refreshers only when actual bottlenecks occur, rather than mandatory repetition of an entire prior math specialization.
+
+**Course-specific evidence:** [Deep Learning Specialization Progress Tracker](knowledge/DEEP_LEARNING_SPECIALIZATION_PROGRESS.md). The student has started Course 1; specific DLS lessons, labs and test results are not yet reported.
 
 ## Phase 3B — PyTorch for Deep Learning Professional Certificate
 
@@ -60,7 +62,7 @@ Certificates document learning progress. Job readiness depends on independently 
 
 ## Current next action
 
-**Start Deep Learning Specialization, Course 1: Neural Networks and Deep Learning.** Keep existing student-first guided coding procedure. When a lab passes, conduct a post-test numerical/data-shape walkthrough on request and update the canonical cheat sheet and knowledge records selectively.
+**Continue Deep Learning Specialization, Course 1: Neural Networks and Deep Learning.** Keep existing student-first guided coding procedure. When a lab passes, conduct a post-test numerical/data-shape walkthrough on request and update the canonical cheat sheet and knowledge records selectively.
 
 ## Long-term destination
 

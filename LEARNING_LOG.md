@@ -168,6 +168,12 @@ Lessons from questions and independently written code: the greatest difficulty i
 
 **User-approved personalized training decision:** prioritize Andrew Ng Deep Learning Specialization next, then PyTorch for Deep Learning, Transformers/LLM applications, and production ML/LLMOps with a privacy-safe telecom-oriented capstone. Evaluate progress and interests continuously and recommend course adjustments based on actual evidence rather than a generic certificate sequence. See [Adaptive Training Contract](knowledge/ADAPTIVE_ML_LLM_TRAINING_CONTRACT.md) and [Roadmap](ROADMAP.md).
 
+### 5 November 2026 — Deep Learning Specialization started
+
+The student reported starting Andrew Ng's **Deep Learning Specialization** (Course 1: *Neural Networks and Deep Learning*). The adaptive training contract remains in force: assess the evidence in independently written code, questions and explanations, repeated sticking points, interests and practical project outcomes. Keep conceptual understanding, implementation fluency and engineering judgment separate rather than labeling every question a weakness. Update the roadmap when new evidence justifies a change and explain why.
+
+A dedicated [Deep Learning Specialization Progress Tracker](knowledge/DEEP_LEARNING_SPECIALIZATION_PROGRESS.md) now captures the entry baseline from the ML Specialization and course-specific observations. **No new course assignment or test completion was reported at this start checkpoint.**
+
 ## Concepts to revisit
 
 Add entries here as they appear during training. A useful entry answers three questions:
