@@ -174,6 +174,14 @@ The student reported starting Andrew Ng's **Deep Learning Specialization** (Cour
 
 A dedicated [Deep Learning Specialization Progress Tracker](knowledge/DEEP_LEARNING_SPECIALIZATION_PROGRESS.md) now captures the entry baseline from the ML Specialization and course-specific observations. **No new course assignment or test completion was reported at this start checkpoint.**
 
+### 5 November 2026 — Geoffrey Hinton interview: philosophical/representation learning milestone
+
+During Deep Learning Specialization Course 1, the learner watched the full optional Andrew Ng interview with Geoffrey Hinton and requested a detailed, faithful explanation. The strongest interest was the 37:45–40:22 argument about symbolic expressions versus distributed neural activity vectors, but the whole interview showed related themes: early word embeddings, backpropagation, approximate inference, biological learning, capsules and research judgment.
+
+**Assessment:** This reveals a persistent **strength and interest**, not a coding failure: the learner engages deeply with how meaning, representations, learning and scientific explanation relate. Future teaching should preserve technical accuracy and epistemic boundaries while using causal, numerical examples linked to the student's 32-dimensional recommender embeddings and Lunar Lander training. Do not add extra course gates or alter the agreed learning path on this basis alone.
+
+**Durable explanation:** [Geoffrey Hinton Interview — Complete Guided Study](knowledge/GEOFFREY_HINTON_INTERVIEW_COMPLETE_STUDY.md). The guide explicitly distinguishes Hinton's historical statements, narrower technical results and speculative hypotheses.
+
 ## Concepts to revisit
 
 Add entries here as they appear during training. A useful entry answers three questions:

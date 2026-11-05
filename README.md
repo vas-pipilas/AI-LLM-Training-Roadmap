@@ -50,6 +50,10 @@ Extend this same canonical file as I learn new coding topics. Keep the focused n
 
 [**Read the full Machine Learning Specialization booklet**](knowledge/MACHINE_LEARNING_SPECIALIZATION_COMPLETE_BOOKLET.md) — the one continuous, human-readable theory/code guide for all three courses: regression and classification; neural networks, evaluation, trees and ensembles; K-means, anomaly detection, recommenders, PCA and Lunar Lander DQN. It consolidates verified notes and lab lessons, without replacing the canonical Python cheat sheet or overstating assessment status.
 
+## Deep Learning history and philosophy
+
+- [Geoffrey Hinton Interview — Complete Guided Study](knowledge/GEOFFREY_HINTON_INTERVIEW_COMPLETE_STUDY.md) — the full 40-minute Heroes of Deep Learning interview explained in accessible but technically faithful language: early backprop and word embeddings, Boltzmann machines, variational inference, ReLU, biological learning, fast weights, capsules, predictable representations, research advice and the symbolic-AI versus vector-thought argument. Includes the exact interview timeline, caveats and links to previous labs.
+
 ## Core knowledge notes
 
 When a subject becomes foundational enough that I will need it again later, it gets its own detailed reference under `knowledge/`. These are not copied course notes. They are written around the explanations, mistakes, questions, and mental models that actually helped the subject click for me.

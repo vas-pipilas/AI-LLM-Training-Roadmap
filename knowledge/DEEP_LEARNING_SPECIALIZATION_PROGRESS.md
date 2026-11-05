@@ -60,6 +60,16 @@ This is a readiness guide, not a new compulsory gate or a reason to delay studyi
 
 Student reported: "starting Deep Learning Specialization". Reaffirmed request to track progress, recurring vulnerabilities and emerging interests, and to adjust the career roadmap in response to real evidence. Baseline and agreed method documented here. **No new DLS coursework outcome asserted at this checkpoint.**
 
+### 2026-11-05 — Hinton Heroes of Deep Learning interview (optional)
+
+**Activity observed:** Watched the approximately 40-minute interview and supplied full transcript. Asked about symbolic AI, symbolic expressions and non-monotonic reasoning, then explicitly requested a technically faithful, detailed explanation of *all* topics. Especially interested in the concluding hypothesis that internal thoughts may be distributed neural activity vectors unlike the word strings used to communicate.
+
+**Strength/interest:** Research philosophy, scientific explanation and representation learning strongly motivate sustained study. Previous questions about recommender embeddings and the origin of Lunar Lander inputs provide useful analogies.
+
+**Intervention/documentation:** [Full Geoffrey Hinton interview companion](GEOFFREY_HINTON_INTERVIEW_COMPLETE_STUDY.md), covering original chronology and source caveats, not just a simplified last-three-minute summary.
+
+**Plan impact:** No evidence of a new coding weakness, no change to DLS → PyTorch → LLM engineering sequence. Use learned representation, hidden state and dataflow examples when useful; keep speculative neuroscience separate from established engineering techniques.
+
 ### Upcoming entries
 
 Add entries after specific labs or substantial conceptual milestones. Every entry should distinguish **observed success**, **unresolved question**, **teaching intervention**, and **next action**. Write corrections into existing canonical references when learned; don't invent new files for every question.
