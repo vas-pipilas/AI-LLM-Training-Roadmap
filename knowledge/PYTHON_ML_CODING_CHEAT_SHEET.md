@@ -1544,3 +1544,30 @@ print(q[np.arange(2),chosen_actions]) # [3,5]
 **TensorFlow syntax:** tf.reduce_max(target_q_network(next_states),axis=-1) selects max action per transition; tf.cast(actions,tf.int32), tf.range(B), tf.stack(...,axis=1), tf.gather_nd(...) select chosen-action Q predictions. Bellman: target = rewards + (1 - done_vals)*(gamma*max_qsa) using a numeric mask; do not zero-out the immediate reward. MSE(target,predictedQ) is scalar training loss. tf.GradientTape, tape.gradient and optimizer.apply_gradients(zip(...)) train main Q model; target weights undergo soft updates separately. @tf.function may accelerate a custom graph-compatible train step.
 
 **Observed lab outcome:** three Exercise 1 tests PASS, Exercise 2 PASS; episode 650 last-100 score 201.03 >=200 threshold, runtime 593.10 seconds. Results are notebook-observed, not a new evaluation. Training score sum is **undiscounted** episode reward; Bellman return uses gamma. DQN is relevant ML/RL foundation but not default modern LLM training.
+
+## DLS vectorization, broadcasting and shape orientation — reinforcement (2026-11-08)
+
+**DLS layout:** Image examples are stored as columns. Eight 8-by-8 grayscale images have 64 features each, so X is (64,8). Typical scikit-learn rows-as-examples convention would be (8,64). Always read the stated convention.
+
+**Broadcasting:** NumPy aligns dimensions from the right; each compared dimension must match or one must be 1. Shape (3,4) plus (4,1) is incompatible; transposing the latter to (1,4) permits a different offset for each of the 4 columns, repeated over 3 rows. Transpose is necessary for that alignment, not for vectorization in general.
+
+**Operations:** '*' between NumPy arrays means elementwise multiplication and can broadcast (3,1) across the columns of (3,3), producing (3,3). '@' and np.matmul perform true matrix multiplication: (3,3) @ (3,1) -> (3,1).
+
+**Neuron:** z = W @ x + b happens first, then a = g(z). The reverse is a different function.
+
+**Reshape:** Preserve number of elements. (8,1) has 8 elements: (2,2,2) works, (2,4,4) does not. -1 means infer the required dimension only when integer factorization permits.
+
+~~~python
+import numpy as np
+a = np.arange(12).reshape(3,4)
+b = np.array([[10],[20],[30],[40]])
+print((a + b.T).shape)  # (3,4); b.T is (1,4)
+m = np.arange(1,10).reshape(3,3)
+v = np.array([[10],[20],[30]])
+print((m * v).shape)      # (3,3), elementwise with broadcasting
+print((m @ v).shape)      # (3,1), matrix multiplication
+x = np.arange(8).reshape(8,1)
+print(x.reshape(2,2,2).shape) # (2,2,2)
+~~~
+
+**Three-point checklist:** Which axis means examples? Is the operation elementwise or matrix multiplication? Does the resulting shape/element count make sense? Predict before executing.

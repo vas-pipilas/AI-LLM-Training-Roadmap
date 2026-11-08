@@ -70,6 +70,22 @@ Student reported: "starting Deep Learning Specialization". Reaffirmed request to
 
 **Plan impact:** No evidence of a new coding weakness, no change to DLS → PyTorch → LLM engineering sequence. Use learned representation, hidden state and dataflow examples when useful; keep speculative neuroscience separate from established engineering techniques.
 
+### 2026-11-08 — Vectorization/shape quiz: five incorrect answers
+
+**Evidence:** Student provided screenshots with wrong selections for Q1, Q2, Q3, Q4 and Q6. No corrective reattempt has been observed yet.
+
+**Q1:** a shape (3,4), b shape (4,1), chose a+b. Broadcasting incompatible; b.T shape (1,4) aligns one offset per column of a. General rule: check axes from right to left.
+**Q2:** Eight 8x8 grayscale images flattened as column vectors and concatenated horizontally, selected (8,64), but DLS notation uses features-by-examples (64,8). Typical sklearn usually uses examples-by-features (8,64), so the convention switch is a genuine trap.
+**Q3:** For (3,3) * (3,1), chose matrix-multiplication description. NumPy * is elementwise with broadcasting, result (3,3); @ is matrix multiplication, result (3,1).
+**Q4:** Chose activation followed by Wx+b. Standard neuron first z=Wx+b, then a=g(z).
+**Q6:** Attempted reshape (8,1) to (2,4,4), which would need 32 entries rather than 8. Shape products must be invariant; (2,2,2) is legal.
+
+**Interpretation:** A coherent and fixable issue with tensor layout and code/mathematics mapping, not five separate permanent weaknesses. Some errors in quiz may reflect a convention switch rather than inability to code. Future evidence should distinguish comprehension after explanation from independent mastery.
+
+**Targeted next intervention:** Three tiny independent NumPy examples for broadcasting, * versus @, and DLS features-as-columns; student predicts output shapes and values before running. Add neuron calculation order and reshape-count check. No change to Deep Learning -> PyTorch -> LLM plan. Do not impose an unrelated graded task or disclose future graded solutions unrequested.
+
+**Reference:** Python ML Coding Cheat Sheet, DLS vectorization and orientation section.
+
 ### Upcoming entries
 
 Add entries after specific labs or substantial conceptual milestones. Every entry should distinguish **observed success**, **unresolved question**, **teaching intervention**, and **next action**. Write corrections into existing canonical references when learned; don't invent new files for every question.
