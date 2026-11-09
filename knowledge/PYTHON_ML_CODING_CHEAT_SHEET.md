@@ -8,6 +8,8 @@
 
 ## Navigation
 
+- [Matrix shape magic — DLS logistic regression debugging](#matrix-shape-magic--dls-logistic-regression-debugging) — transpose, dot, reshape, broadcasting, and shape comments.
+
 | Level | Jump to | Use it for |
 | --- | --- | --- |
 | Start | [0. Run the examples](#0-run-the-examples) | Environment, notation, dependencies |
@@ -1571,3 +1573,76 @@ print(x.reshape(2,2,2).shape) # (2,2,2)
 ~~~
 
 **Three-point checklist:** Which axis means examples? Is the operation elementwise or matrix multiplication? Does the resulting shape/element count make sense? Predict before executing.
+
+---
+
+## Matrix shape magic — DLS logistic regression debugging (9 November 2026)
+
+**When a transpose seems to appear from nowhere, annotate the dimensions first.** The `shape` tuple describes axes, not universally "rows and columns": for a 2D matrix `(rows, columns)`; for a batch of RGB images `(images, height, width, channels)`.
+
+### Andrew Ng's examples-as-columns convention
+
+```python
+# Original images: (m, height, width, channels)
+# E.g. (209, 64, 64, 3)
+X = images.reshape(images.shape[0], -1).T
+# After reshape: (209, 12288) = one flattened image per row
+# After .T:      (12288, 209) = one flattened image per column
+
+n, m = X.shape           # n = features, m = examples
+w = np.zeros((n, 1))     # column of weights
+b = 0.0                  # scalar bias
+# Y: (1, m) actual labels
+```
+
+**One image** is a column of shape `(12288, 1)`; **the dataset** is `(12288, 209)`. `X[:, 0:1]` preserves the 2D column shape. `reshape` preserves the number of elements; `-1` infers a dimension. `np.zeros(5)` gives `(5,)`; `np.zeros((5, 1))` gives `(5, 1)`.
+
+### Shape ledger: put this above the code
+
+```python
+# X:       (n, m)     features x examples
+# w:       (n, 1)     weights column
+# w.T:     (1, n)
+# b:       scalar
+# Y:       (1, m)     one label per example
+# A:       (1, m)     one probability per example
+# A - Y:   (1, m)     one error per example
+# (A-Y).T: (m, 1)
+# dw:      (n, 1)     same shape as w
+# db:      scalar
+```
+
+### Three rules that prevent most mistakes
+
+- **`np.dot(left, right)` / `@`:** inner dimensions must agree: `(a, b) @ (b, c) -> (a, c)`. If not, inspect where a transpose belongs *before* multiplying.
+- **`*`:** element-wise multiplication, with broadcasting when shapes permit. It does **not** sum corresponding products.
+- **`.T`:** for 2D arrays swaps axes, e.g. `(1, m) -> (m, 1)`. Apply it to the operand specified by the formula, not automatically to the final result.
+
+### Annotated logistic regression example (the lab's formulas)
+
+```python
+# Forward: (1,n) @ (n,m) -> (1,m); sigmoid keeps the shape
+A = sigmoid(np.dot(w.T, X) + b)
+
+# Cost: each (1,m) @ (m,1) -> (1,1)
+cost = (-1/m) * (np.dot(Y, np.log(A).T)
+                 + np.dot(1-Y, np.log(1-A).T))
+cost = np.squeeze(np.asarray(cost))  # remove singleton axes
+
+# Backward: (n,m) @ (m,1) -> (n,1)
+dw = (1/m) * np.dot(X, (A-Y).T)
+db = (1/m) * np.sum(A-Y)            # scalar
+```
+
+The cost formula assumes probabilities strictly between 0 and 1; production implementations typically use numerically stable loss routines. The expressions above match the learning exercise, not a general-purpose loss library.
+
+### Debug at the exact point of confusion
+
+```python
+print("X", X.shape, "w", w.shape, "Y", Y.shape, "A", A.shape)
+print("w.T", w.T.shape, "(A-Y).T", (A-Y).T.shape)
+assert A.shape == Y.shape
+assert dw.shape == w.shape
+```
+
+**Fast decision:** Is each example a row or a column? What shape must the output have? Write both operand shapes in a comment, check the inner dimensions for `np.dot`, then code. In the examples-as-rows convention `X.shape == (m,n)`, predictions can use `X @ w`; Andrew's examples-as-columns convention uses `w.T @ X`. Both conventions are valid, but mixing them causes the transpose confusion.
