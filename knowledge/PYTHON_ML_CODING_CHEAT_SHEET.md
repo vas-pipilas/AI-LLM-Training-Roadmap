@@ -1646,3 +1646,8 @@ assert dw.shape == w.shape
 ```
 
 **Fast decision:** Is each example a row or a column? What shape must the output have? Write both operand shapes in a comment, check the inner dimensions for `np.dot`, then code. In the examples-as-rows convention `X.shape == (m,n)`, predictions can use `X @ w`; Andrew's examples-as-columns convention uses `w.T @ X`. Both conventions are valid, but mixing them causes the transpose confusion.
+
+
+### Deep Learning Specialization C1 W2 — complete model walkthrough
+
+For the full **ELI5 cat-classifier lab**, from 64×64 RGB images through `initialize_with_zeros`, `propagate`, `optimize`, `predict`, and `model`, including the matrix-dimension table and observed overfitting, see [Logistic Regression with a Neural Network Mindset — ELI5](DLS_C1_W2_LOGISTIC_REGRESSION_ELI5.md). This is a companion to the existing matrix-shape debugging reference, not a duplicate mega cheat sheet.
