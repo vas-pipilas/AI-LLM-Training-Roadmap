@@ -96,3 +96,5 @@ This section should grow selectively. Not every lesson deserves a document; core
 This repository is deliberately written as a human learning journal, not as a corporate project plan. It should change when my knowledge, interests, or the AI ecosystem changes.
 
 
+
+- [DLS Course 1 — Shallow Neural Network ELI5 lab study](knowledge/DLS_C1_SHALLOW_NEURAL_NETWORK_ELI5.md) — two-layer forward pass, dimensions, binary cross-entropy and calculus-to-code translation, including actual reported test results.

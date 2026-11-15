@@ -86,6 +86,16 @@ Student reported: "starting Deep Learning Specialization". Reaffirmed request to
 
 **Reference:** Python ML Coding Cheat Sheet, DLS vectorization and orientation section.
 
+### 2026-11-15 — Shallow neural-network lab: calculus-to-code reinforcement
+
+**Reported exercises:** layer_sizes (Exercise 2), forward_propagation (Exercise 3), compute_cost (Exercise 5). Student screenshots show official public tests PASS for layer_sizes (n_x=5,n_h=4,n_y=2) and compute_cost (cost=0.6930587610394646); forward_propagation code matches all four equations by inspection but no test result was shared.
+
+**Independent success:** Student wrote all four forward-pass calculations using NumPy dot, tanh and sigmoid correctly. Student constructed both cross-entropy terms, transpose and correct signs; /m was missing initially, then independently corrected after hint.
+
+**Difficulties and reflection:** Student reports calculus felt hard and stepwise guidance made the lab manageable, but wants to improve. Repeated shape-versus-axis indexing, array-orientation and formula-to-code completeness (especially 1/m) need deliberate practice. Neither one omission nor a Python syntax mistake proves poor fundamental algorithm understanding.
+
+**Targeted response:** Dedicated [ELI5 shallow-network guide](DLS_C1_SHALLOW_NEURAL_NETWORK_ELI5.md) explaining every equation and small numerical examples. Practice tracing one example across tanh and sigmoid, hand-computing binary cross-entropy for y=0/1, auditing every mathematical term, and a tiny chain-rule example ahead of backprop. Prefer hints that help the student find omissions. No roadmap change; reassess on a new independent problem.
+
 ### Upcoming entries
 
 Add entries after specific labs or substantial conceptual milestones. Every entry should distinguish **observed success**, **unresolved question**, **teaching intervention**, and **next action**. Write corrections into existing canonical references when learned; don't invent new files for every question.

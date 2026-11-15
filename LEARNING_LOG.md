@@ -182,6 +182,12 @@ During Deep Learning Specialization Course 1, the learner watched the full optio
 
 **Durable explanation:** [Geoffrey Hinton Interview — Complete Guided Study](knowledge/GEOFFREY_HINTON_INTERVIEW_COMPLETE_STUDY.md). The guide explicitly distinguishes Hinton's historical statements, narrower technical results and speculative hypotheses.
 
+### 15 November 2026 — Shallow network: calculus and implementation reflections
+
+User reports that calculus in the one-hidden-layer neural-network lab was hard, though guided coding worked; wants stronger independent skills. Public tests passed for layer_sizes and compute_cost (observed cost 0.6930587610394646). Independently wrote a mathematically correct four-line forward propagation implementation, but no forward-propagation public-test screenshot was shared. Biggest repeated difficulties: array indexing vs shape indexing, tensor orientation and overlooking complete equation factors such as /m. Record this as a targeted practice area, not a conclusion of weak ML understanding.
+
+**ELI5 study note:** [Shallow Neural Network Lab](knowledge/DLS_C1_SHALLOW_NEURAL_NETWORK_ELI5.md). Next practice: concrete numeric forward pass, y=0/1 cross-entropy, formula-to-code checklist, then tiny derivatives when backprop begins.
+
 ## Concepts to revisit
 
 Add entries here as they appear during training. A useful entry answers three questions:

@@ -1651,3 +1651,8 @@ assert dw.shape == w.shape
 ### Deep Learning Specialization C1 W2 — complete model walkthrough
 
 For the full **ELI5 cat-classifier lab**, from 64×64 RGB images through `initialize_with_zeros`, `propagate`, `optimize`, `predict`, and `model`, including the matrix-dimension table and observed overfitting, see [Logistic Regression with a Neural Network Mindset — ELI5](DLS_C1_W2_LOGISTIC_REGRESSION_ELI5.md). This is a companion to the existing matrix-shape debugging reference, not a duplicate mega cheat sheet.
+
+
+### Deep Learning Specialization C1: Shallow neural network (ELI5)
+
+[Full one-hidden-layer guide](DLS_C1_SHALLOW_NEURAL_NETWORK_ELI5.md) records exact supplied exercises, shapes, tanh/sigmoid forward pass and cross-entropy, test evidence, and the difference between cost and calculus gradients. Formula-to-code audit: check each operand shape, all nonlinear transforms, negative sign, reduction and normalizer 1/m.
